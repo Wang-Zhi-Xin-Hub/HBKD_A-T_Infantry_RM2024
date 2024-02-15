@@ -43,6 +43,7 @@ osStatus_t IMU_IfDataError( void )
     else
         return osOK;
 }
+
 /* 斜坡函数（float） */
 float RAMP_float( float final, float now, float ramp )
 {
@@ -63,6 +64,7 @@ float RAMP_float( float final, float now, float ramp )
     }
     return now;
 }
+
 /* 电机急停函数 */
 void Chassis_Stop()
 {

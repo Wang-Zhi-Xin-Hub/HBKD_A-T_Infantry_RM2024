@@ -4,6 +4,11 @@
  * @brief    断控保护（看门狗）任务
  */
 #include "Task_Protect.h"
+#define LOOK_STACK 0
+
+#if LOOK_STACK
+UBaseType_t uxHighWaterMark1,uxHighWaterMark2,uxHighWaterMark3,uxHighWaterMark4,uxHighWaterMark5,uxHighWaterMark6;
+#endif
 
 /* 断控保护任务（!安全第一） */
 void Task_Protect(void *pvParameters)
@@ -32,9 +37,19 @@ void Task_Protect(void *pvParameters)
 			osThreadResume(Task_Shoot_handle);
 			osThreadResume(Task_Gimbal_handle);
 		}
-        
+
 		/* 看门狗轮询 */
 		WatchDog_Polling();
+        
+#if LOOK_STACK
+        /* 读取任务剩余Stack，防止溢出 */
+        uxHighWaterMark1 = uxTaskGetStackHighWaterMark( Task_Chassis_down_handle );
+        uxHighWaterMark2 = uxTaskGetStackHighWaterMark( Task_Gimbal_handle );
+        uxHighWaterMark3 = uxTaskGetStackHighWaterMark( Task_Shoot_handle );
+        uxHighWaterMark4 = uxTaskGetStackHighWaterMark( Task_Protect_handle );
+        uxHighWaterMark5 = uxTaskGetStackHighWaterMark( Task_IMU_handle );
+        uxHighWaterMark6 = uxTaskGetStackHighWaterMark( Task_Remote_handle );
+#endif
         
 		vTaskDelayUntil(&currentTime, 2); // 绝对延时2ms
 	}

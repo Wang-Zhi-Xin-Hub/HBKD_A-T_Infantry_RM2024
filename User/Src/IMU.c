@@ -32,7 +32,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 				break;
 #endif
 
-#if Quaternions_EN == 1 // 四元数
+#if Quaternions_EN == 1   // 四元数
 			case kItemQuaternions:
 				Dst->Quaternions.W = ((int16_t)(Data[i + 2] << 8) | Data[i + 1]) / 32768.0f;
 				Dst->Quaternions.X = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f;
@@ -41,7 +41,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 				break;
 #endif
 
-#if Acceleration_EN == 1 // 加速度
+#if Acceleration_EN == 1   // 加速度
 			case kItemAcceleration:
 				Dst->Acceleration.X = ((int16_t)(Data[i + 2] << 8) | Data[i + 1]) / 32768.0f * 16 * 9.8f;
 				Dst->Acceleration.Y = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f * 16 * 9.8f;
@@ -57,7 +57,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 				break;
 #endif
 
-#if EulerAngle_EN == 1 // 欧拉角
+#if EulerAngle_EN == 1     // 欧拉角
 			case kItemEulerAngler:
 				Dst->EulerAngler.Roll  = ((int16_t)(Data[i + 2] << 8) | Data[i + 1]) / 32768.0f * 180;
 				Dst->EulerAngler.Pitch = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f * 180;

@@ -41,14 +41,14 @@ void Task_Init()
     HAL_NVIC_DisableIRQ(DMA1_Stream5_IRQn);
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
     HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
-       
+    
     /* 创建任务 */
     xTaskCreate((TaskFunction_t)Task_Chassis_down, "Task_Chassis_down", 256, NULL, 3, &Task_Chassis_down_handle);
-    xTaskCreate((TaskFunction_t)Task_Gimbal, "Task_Gimbal", 256, NULL, 4, &Task_Gimbal_handle);
-    xTaskCreate((TaskFunction_t)Task_Shoot, "Task_Shoot", 256, NULL, 5, &Task_Shoot_handle);
-    xTaskCreate((TaskFunction_t)Task_IMU_Rx, "IMU_Rx", 128, NULL, 6, &Task_IMU_handle);
-    xTaskCreate((TaskFunction_t)Task_Remote_Rx, "Remote_Rx", 128, NULL, 6, &Task_Remote_handle);
-    xTaskCreate((TaskFunction_t)Task_Protect, "Task_Protect", 128, NULL, 7, &Task_Protect_handle);
+    xTaskCreate((TaskFunction_t)Task_Gimbal,       "Task_Gimbal",       256, NULL, 4, &Task_Gimbal_handle);
+    xTaskCreate((TaskFunction_t)Task_Shoot,        "Task_Shoot",        256, NULL, 5, &Task_Shoot_handle);
+    xTaskCreate((TaskFunction_t)Task_IMU_Rx,       "IMU_Rx",            128, NULL, 6, &Task_IMU_handle);
+    xTaskCreate((TaskFunction_t)Task_Remote_Rx,    "Remote_Rx",         128, NULL, 6, &Task_Remote_handle);
+    xTaskCreate((TaskFunction_t)Task_Protect,      "Task_Protect",      128, NULL, 7, &Task_Protect_handle);
     
     taskEXIT_CRITICAL(); // 退出临界区
     

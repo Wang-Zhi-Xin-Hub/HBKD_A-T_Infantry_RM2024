@@ -52,7 +52,7 @@ void Task_Chassis_down(void *pvParameters)
                 Chassis_Close();
         }
         /* 各机构状态（发给下板动态UI显示） */
-        Send_UI_State();        
+        Send_UI_State();
         vTaskDelayUntil(&currentTime, 2);
     }
 }
@@ -163,23 +163,24 @@ void Chassis_Follow()
 /* 底盘补偿计算 */
 void Chassis_Move()
 {
-    static float Move_level_gain, chassis_offset;
+    static float Level_Gain, chassis_offset;
     static int16_t forward_back_ref = 0, left_right_ref = 0;
 
-    Move_level_gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                      // 速度等级增益
+    Level_Gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                      // 等级增益
     chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;  // 底盘补偿角
 
     if (RC_CtrlData.key.Shift == 1)
     {
-        left_right_ref = Key_ch[0] * CHASSIS_Speed_H_Y * Move_level_gain;
-        forward_back_ref = Key_ch[1] * CHASSIS_Speed_H_X * Move_level_gain;
+        left_right_ref   = Key_ch[0] * CHASSIS_Speed_H_Y * Level_Gain;
+        forward_back_ref = Key_ch[1] * CHASSIS_Speed_H_X * Level_Gain;
     }
     else
     {
-        left_right_ref = Key_ch[0] * CHASSIS_Speed_L_Y * Move_level_gain * 2.0f;
-        forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Move_level_gain * 2.0f;
+        left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain * 2.0f;
+        forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain * 2.0f;
     }
-    if(Gimbal_State[YAW] == Device_Online){
+    if(Gimbal_State[YAW] == Device_Online)
+    {
         /* 底盘补偿(小陀螺模式也能正常移动)*/
         Communication_Speed_Tx.Chassis_Speed.forward_back_ref =  forward_back_ref * cosf(  chassis_offset)  + left_right_ref * sinf(  chassis_offset);
         Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  forward_back_ref * sinf( -chassis_offset)  + left_right_ref * cosf( -chassis_offset);
@@ -194,8 +195,8 @@ void Chassis_Move()
 /* 变速小陀螺 */
 void Variable_Speed_Gyroscope()
 {
-    static float time = 0;  // 时间比例（变速区间0.75 - 1.30 每2ms变0.005f）
-    static float angle = 0; // 角度比例
+    static float time  = 0;  // 时间比例（变速区间0.75 - 1.30 每2ms变0.005f）
+    static float angle = 0;  // 角度比例
     static float Variable_Speed_K = 1.0f;
     static char add_time_flag = 1;
 
@@ -220,7 +221,7 @@ void Variable_Speed_Gyroscope()
         angle = ABS(705.0f - Gimbal_Motor[YAW].MchanicalAngle) / 2050.57f;
     if (Gimbal_Motor[YAW].MchanicalAngle <= 8191 && Gimbal_Motor[YAW].MchanicalAngle >= 7880)
         angle = ABS(705.0f + 8191.0f - Gimbal_Motor[YAW].MchanicalAngle) / 2050.57f;
-
+    
     /* 最终变速比例 */
     Variable_Speed_K = 1.0f;
 
