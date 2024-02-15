@@ -41,11 +41,7 @@ void Task_Init()
     HAL_NVIC_DisableIRQ(DMA1_Stream5_IRQn);
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
     HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
-   
-    /* Kalmanll_Init(自瞄) */
-    kalmanII_Init(&Y_Kalman);
-    kalmanII_Init(&P_Kalman);
-    
+       
     /* 创建任务 */
     xTaskCreate((TaskFunction_t)Task_Chassis_down, "Task_Chassis_down", 256, NULL, 3, &Task_Chassis_down_handle);
     xTaskCreate((TaskFunction_t)Task_Gimbal, "Task_Gimbal", 256, NULL, 4, &Task_Gimbal_handle);
@@ -54,7 +50,8 @@ void Task_Init()
     xTaskCreate((TaskFunction_t)Task_Remote_Rx, "Remote_Rx", 128, NULL, 6, &Task_Remote_handle);
     xTaskCreate((TaskFunction_t)Task_Protect, "Task_Protect", 128, NULL, 7, &Task_Protect_handle);
     
-    vTaskDelete(NULL);   // 删除开始空闲任务
-    
     taskEXIT_CRITICAL(); // 退出临界区
+    
+    vTaskDelete(NULL);   // 删除开始空闲任务
+
 }

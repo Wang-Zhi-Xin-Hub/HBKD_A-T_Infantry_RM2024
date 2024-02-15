@@ -64,21 +64,21 @@ void Chassis_RC_Ctrl()
     switch (RC_CtrlData.rc.s1)
     {
     case 1:
-        ChassisAction = CHASSIS_SPIN;
-        AimAction = AIM_STOP;
+        ChassisAction = CHASSIS_NORMAL;
+        AimAction = AIM_AID;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
-        ShootAction = SHOOT_STOP;
+            ShootAction = SHOOT_NORMAL;
     break;
 
     case 3:
-        ChassisAction = CHASSIS_SPIN;
-        AimAction = AIM_STOP;
+        ChassisAction = CHASSIS_NORMAL;
+        AimAction = AIM_AID;
         if(ShootAction != SHOOT_STUCKING)
-        ShootAction = SHOOT_STOP;
+            ShootAction = SHOOT_READY;
     break;
 
     case 2:
-        ChassisAction = CHASSIS_FOLLOW;
+        ChassisAction = CHASSIS_NORMAL;
         AimAction = AIM_STOP;
         ShootAction = SHOOT_STOP;
     break;
@@ -226,9 +226,9 @@ void Variable_Speed_Gyroscope()
 
     /* 小陀螺有等级增益，有移动速度时减小 */
     if (Key_ch[0] || Key_ch[1])
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = (3000 + Referee_data_Rx.robot_level * 150) * Variable_Speed_K;
+        Communication_Speed_Tx.Chassis_Speed.rotate_ref = (2000 + Referee_data_Rx.robot_level * 150) * Variable_Speed_K;
     else
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = (6000 + Referee_data_Rx.robot_level * 250) * Variable_Speed_K;
+        Communication_Speed_Tx.Chassis_Speed.rotate_ref = (3000 + Referee_data_Rx.robot_level * 250) * Variable_Speed_K;
 }
 
 /* 发送机构状态 */

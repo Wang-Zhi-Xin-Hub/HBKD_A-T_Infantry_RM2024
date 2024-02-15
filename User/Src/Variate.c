@@ -34,20 +34,20 @@ PID Pluck_Continue_PID = {.Kp = 15, .Ki = 0, .Kd = 0, .limit = 5000};           
 PID_Smis Chassis_Speed_PIDS = {.Kp = 2.8f, .Ki = 0, .Kd = 0, .limit = 5000};     //底盘跟随   位置环
 PID Chassis_Speed_PID = {.Kp =3.0f, .Ki = 0, .Kd = 0.1, .limit = 5000};          //           速度环
 
-/* 二阶卡尔曼初始化（用于自瞄）*/
+/* 卡尔曼初始化（用于自瞄）*/
 kalman_filterII_t Y_Kalman={
 	.P_data = {2,0,0,2},              //协方差矩阵
     .A_data = {1, 0.001, 0, 1},       //预测矩阵（采样时间）
     .H_data = {1, 0, 0, 1}, 	      //传感器测量数据矩阵																		
     .Q_data = {1, 0, 0, 1},           //外部的不确定性（过程噪声协方差）     
-    .R_data = {10000,0,0,0.01},       //传感器测量方差（采集数据方差）
+    .R_data = {0.5,0,0,0.05},       //传感器测量方差（采集数据方差）
 };
 kalman_filterII_t P_Kalman={
 	.P_data = {2,0,0,2},
     .A_data = {1, 0.001, 0, 1},
     .H_data = {1, 0, 0, 1},
     .Q_data = {1,0 , 0, 0.1},
-    .R_data = {200,0,0,2000},
+    .R_data = {0.5,0,0,0.05},
 };
 
 #elif ROBOT_ID == 4

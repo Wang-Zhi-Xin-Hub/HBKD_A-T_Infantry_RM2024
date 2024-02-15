@@ -10,11 +10,4 @@
 #include "Variate.h"
 #include "Function.h"
 
-extern TaskHandle_t  Task_Chassis_down_handle;
-extern TaskHandle_t  Task_Gimbal_handle;
-extern TaskHandle_t  Task_Shoot_handle;
-extern TaskHandle_t  Task_Protect_handle;
-extern TaskHandle_t  Task_IMU_handle;
-extern TaskHandle_t  Task_Remote_handle;
-
 #endif

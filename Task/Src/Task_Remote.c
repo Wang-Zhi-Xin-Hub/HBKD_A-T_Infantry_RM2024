@@ -8,18 +8,15 @@
 /* 遥控器接收任务 */
 void Task_Remote_Rx(void *pvParameters)
 {
-    static portTickType currentTime;	
     for(;;)
     {
-        currentTime = xTaskGetTickCount();
-        if(osSemaphoreAcquire(Remote_Semaphore_Handle,14)==osOK)
+        if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever) == osOK)
         {
             if(Remote_flag==1)
-            Remote_Rx(Usart1_Remote_Dma[0]);
+                Remote_Rx(Usart1_Remote_Dma[0]);
             else
-            Remote_Rx(Usart1_Remote_Dma[1]);
+                Remote_Rx(Usart1_Remote_Dma[1]);
         }
-        vTaskDelayUntil(&currentTime, 14);//遥控器反馈频率为14ms
     }
 }
 /* 3个遥控器数据处理函数 */

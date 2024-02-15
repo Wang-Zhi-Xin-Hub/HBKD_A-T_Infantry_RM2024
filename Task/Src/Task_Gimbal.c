@@ -33,8 +33,7 @@ void Task_Gimbal(void *pvParameters)
                     Gimbal_Stop();
                 if (RemoteMode != STOP)
                 {
-                    if(PC_State == Device_Online)
-                        Aim_Control();
+                    Aim_Control();
                     Gimbal_Move();
                 }
 #if GIMBAL_RUN
@@ -55,7 +54,7 @@ void Median_Init()
     static float Expect_PitchInit = 0;
     static float Expect_YawInit = 0;
 
-    if ((Gimbal_State[PITCH] == Device_Online) && (Gimbal_State[YAW] == Device_Online))
+    if ((Gimbal_State [PITCH] == Device_Online) && (Gimbal_State [YAW] == Device_Online))
         tim++;
     else
         tim = 0;
@@ -80,7 +79,7 @@ void Median_Init()
         else
             Expect_YawInit = QuickCentering( Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Back );
 
-        Expect_PitchInit = QuickCentering( Gimbal_Motor[PITCH].MchanicalAngle, Pitch_Mid );
+        Expect_PitchInit   = QuickCentering( Gimbal_Motor[PITCH].MchanicalAngle, Pitch_Mid );
         
         /* Yaw轴归中 */
         PID_Control_Smis( Gimbal_Motor[YAW].MchanicalAngle, Expect_YawInit, &Gimbal_Place_PIDS[YAW][Init], Gimbal_Motor[YAW].Speed );
@@ -91,7 +90,7 @@ void Median_Init()
         PID_Control_Smis( Gimbal_Motor[PITCH].MchanicalAngle, Expect_PitchInit, &Gimbal_Place_PIDS[PITCH][Init], Gimbal_Motor[PITCH].Speed );
         PID_Control( Gimbal_Motor[PITCH].Speed, Gimbal_Place_PIDS[PITCH][Init].pid_out, &Gimbal_Speed_PID[PITCH][Init] );
         limit( Gimbal_Speed_PID[PITCH][Init].pid_out, GM6020_LIMIT, -GM6020_LIMIT );
-
+        
         Can2Send_Gimbal[YAW] = (int16_t)Gimbal_Speed_PID[YAW][Init].pid_out;
         Can2Send_Gimbal[PITCH] = (int16_t)Gimbal_Speed_PID[PITCH][Init].pid_out;
 
@@ -109,9 +108,7 @@ void Median_Init()
         Mech_Ref.Pitch = Gimbal_Motor[PITCH].Angle;      //            P轴用电机连续化角度控制
         Gyro_Ref.Yaw = IMU.EulerAngler.ContinuousYaw;    // 陀螺仪模式  Y轴用IMU.ContinueYaw控制
         Gyro_Ref.Pitch = IMU.EulerAngler.Pitch;          //                  P轴用IMU.Pitch控制
-        Aim_Rx.Yaw_Angle = 0;                           //视觉自瞄角
-        Aim_Rx.Pitch_Angle = 0;
-        Gimbal_Ramp_Angle.Yaw = Gimbal_Motor[YAW].Angle;        //归中斜坡（未使用）
+        Gimbal_Ramp_Angle.Yaw = Gimbal_Motor[YAW].Angle;        //归中斜坡（待使用）
         Gimbal_Ramp_Angle.Pitch = Gimbal_Motor[PITCH].Angle;    //归中斜坡
         Gimbal_increase[YAW][Change_RC] = 0;    //控制位置增量
         Gimbal_increase[PITCH][Change_RC] = 0;

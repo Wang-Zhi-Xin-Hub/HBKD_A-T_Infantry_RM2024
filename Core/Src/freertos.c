@@ -45,7 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-void Task_Init(void);
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -57,15 +56,7 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-osSemaphoreId_t Remote_Semaphore_Handle;
-const osSemaphoreAttr_t Remote_Semaphore_attributes = {
-  .name = "Remote_Semaphore"
-};
-/* Definitions for Gyro_Semaphore */
-osSemaphoreId_t IMU_Semaphore_Handle;
-const osSemaphoreAttr_t IMU_Semaphore_attributes = {
-  .name = "IMU_Semaphore"
-};
+void Task_Init(void);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -89,12 +80,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-    /* creation of Remote_Semaphore */
-  Remote_Semaphore_Handle = osSemaphoreNew(1, 1, &Remote_Semaphore_attributes);
-
-    /* creation of Gyro_Semaphore */
-  IMU_Semaphore_Handle = osSemaphoreNew(1, 1, &IMU_Semaphore_attributes);
-
+    
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -131,7 +117,7 @@ void StartDefaultTask(void *argument)
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartDefaultTask */
-        Task_Init();
+    Task_Init();
   /* Infinite loop */
   for(;;)
   {

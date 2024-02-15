@@ -8,10 +8,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     uint16_t CAN1_ID = CAN_Receive_DataFrame(&hcan1, CAN1_buff);
     switch (CAN1_ID)
     {
-        case 0x201:M2006_Receive(&Pluck_Motor, CAN1_buff);Feed_Dog(&Pluck_Dog);break;
-        case 0x202:RM3508_Receive(&Shoot_Motor[LEFT], CAN1_buff);Feed_Dog(&Shoot_Dog[LEFT]);break;   
-        case 0x203:RM3508_Receive(&Shoot_Motor[RIGHT], CAN1_buff);Feed_Dog(&Shoot_Dog[RIGHT]);break;   
-        case 0x101:memcpy(&Referee_data_Rx, CAN1_buff, sizeof(Referee_data_Rx));Feed_Dog(&Down_Dog);break;
+        case 0x201:M2006_Receive( &Pluck_Motor, CAN1_buff); Feed_Dog(&Pluck_Dog);break;
+        case 0x202:RM3508_Receive( &Shoot_Motor[ LEFT ], CAN1_buff); Feed_Dog( &Shoot_Dog[ LEFT ]);break;   
+        case 0x203:RM3508_Receive( &Shoot_Motor[ RIGHT], CAN1_buff); Feed_Dog( &Shoot_Dog[ RIGHT]);break;   
+        case 0x101:memcpy(&Referee_data_Rx, CAN1_buff, sizeof(Referee_data_Rx)); Feed_Dog(&Down_Dog);break;
         default:break;
     }
   }
@@ -25,8 +25,8 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     uint16_t CAN2_ID = CAN_Receive_DataFrame(&hcan2, CAN2_buff);
     switch (CAN2_ID)
     {
-        case 0x205:GM6020_Receive(&Gimbal_Motor[PITCH], CAN2_buff);Feed_Dog(&Gimbal_Dog[PITCH]);break;
-        case 0x206:GM6020_Receive(&Gimbal_Motor[YAW], CAN2_buff);Feed_Dog(&Gimbal_Dog[YAW]);break;
+        case 0x205:GM6020_Receive( &Gimbal_Motor[ PITCH], CAN2_buff); Feed_Dog( &Gimbal_Dog[ PITCH]);break;
+        case 0x206:GM6020_Receive( &Gimbal_Motor[  YAW ], CAN2_buff); Feed_Dog( &Gimbal_Dog[  YAW ]);break;
         default:break;
     }
   }

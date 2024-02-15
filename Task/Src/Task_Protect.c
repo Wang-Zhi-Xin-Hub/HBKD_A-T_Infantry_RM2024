@@ -21,9 +21,9 @@ void Task_Protect(void *pvParameters)
 
 			systemState = SYSTEM_STARTING; // 系统恢复至重启状态
 			RemoteClear();				   // 遥控数据恢复至默认状态
-			Chassis_Close();			   // 底盘关
-			Gimbal_Close();				   // 云台关
-			Shoot_Close();				   // 射击机构关
+			Chassis_Close();			   // 底盘电机关闭
+			Gimbal_Close();				   // 云台电机关闭
+			Shoot_Close();				   // 发射机构电机关闭
 		}
 		else
 		{
@@ -32,6 +32,7 @@ void Task_Protect(void *pvParameters)
 			osThreadResume(Task_Shoot_handle);
 			osThreadResume(Task_Gimbal_handle);
 		}
+        
 		/* 看门狗轮询 */
 		WatchDog_Polling();
         

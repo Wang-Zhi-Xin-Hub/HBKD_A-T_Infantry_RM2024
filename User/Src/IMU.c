@@ -59,9 +59,9 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 
 #if EulerAngle_EN == 1 // 欧拉角
 			case kItemEulerAngler:
-				Dst->EulerAngler.Roll = ((int16_t)(Data[i + 2] << 8) | Data[i + 1]) / 32768.0f * 180;
+				Dst->EulerAngler.Roll  = ((int16_t)(Data[i + 2] << 8) | Data[i + 1]) / 32768.0f * 180;
 				Dst->EulerAngler.Pitch = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f * 180;
-				Dst->EulerAngler.Yaw = ((int16_t)(Data[i + 6] << 8) | Data[i + 5]) / 32768.0f * 180;
+				Dst->EulerAngler.Yaw   = ((int16_t)(Data[i + 6] << 8) | Data[i + 5]) / 32768.0f * 180;
 
 				float diff = Dst->EulerAngler.Yaw - Dst->EulerAngler.LsatAngle;
 				if (diff > 100)

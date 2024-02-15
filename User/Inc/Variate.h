@@ -35,7 +35,7 @@
 #define P_DOWN_limit 300     //!< @brief Pitch轴电机下限位
 #define IMU_UP_limit 25      //!< @brief IMU上限位
 #define IMU_DOWN_limit -20   //!< @brief IMU下限位
-#define SHOOT_SPEED  5000    //!< @brief 摩擦轮电机速度环PID的期望值
+#define SHOOT_SPEED  4000    //!< @brief 摩擦轮电机速度环PID的期望值
 #define PLUCK_SPEED 1300     //!< @brief 拨弹盘电机连发时速度环PID的期望值 //新拨弹盘8000
 #define PLUCK_MOTOR_ONE 1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
 
@@ -79,9 +79,9 @@
 /** @brief 串口1遥控器数据长度 */
 #define Remote_Usart1_Len 18+1
 /** @brief 串口2陀螺仪数据长度（由陀螺仪开启功能决定） */
-#define IMU_Usart2_Len (Time_EN + Acceleration_EN + AngularVelocity_EN + EulerAngle_EN + MagneticFieldIntensity_EN + Pressure_Height_EN + Quaternions_EN) * 11
+#define IMU_Usart2_Len ( Time_EN + Acceleration_EN + AngularVelocity_EN + EulerAngle_EN + MagneticFieldIntensity_EN + Pressure_Height_EN + Quaternions_EN ) * 11
 /** @brief 储存发送给视觉的角度的数组长度   */
-#define Vision_Reserve_Angle_Len 50
+#define Vision_Reserve_Angle_Len 25
 
 /** @brief 电机数据代号 */
 #define PITCH 0
@@ -211,41 +211,44 @@ typedef struct
 extern Communication_Action_t Communication_Action_Tx;
 
 /** @brief  视觉通信接收结构体 */
-typedef struct
-    
+typedef struct __attribute__((packed)) 
 {
-    int8_t fun_code_rx;                 //!< @brief 通信功能码
-    int16_t id_rx;                      //!< @brief 通信ID
-	float Yaw_Angle;                    //!< @brief 视觉发来的Yaw自瞄角度
-    float Yaw_Angle_Last;
-	float Pitch_Angle;                  //!< @brief 视觉发来的Pitch轴自瞄角度
-    float Pitch_Angle_Last;
+    int8_t fun_code_rx;                 //!< @brief 通信功能码（0：时间戳对齐 1：自瞄角度）
+    int16_t id_rx;                      //!< @brief 通信ID(视觉ID：0 电控ID：1)
+    int8_t Rx_ID;                       //!< @brief 数据ID（用于数据对齐）
+    
+	float Yaw_Angle;                    //!< @brief 视觉发来的Yaw自瞄角度差
+	float Pitch_Angle;                  //!< @brief 视觉发来的Pitch轴自瞄角度差
 	float Distance;                     //!< @brief 视觉发来的距离
     uint8_t Shoot_Flag;                 //!< @brief 视觉发来的射击标志位
   	uint8_t Tracker_Status;             //!< @brief 视觉发来的相机此时的跟踪状态 0丢失 1决策中 2跟踪中 3短暂丢失
+    
+    float Aim_Yaw_Now;                  //!< @brief 这一次的自瞄角度
+    float Aim_Yaw_Last;                 //!< @brief 上一次的Yaw自瞄角度
+    float Aim_Pitch_Now;                //!< @brief 这一次的自瞄角度
+    float Aim_Pitch_Last;               //!< @brief 上一次的Pitch自瞄角度
 
-	float Yaw_Angle_Offset;             //!< @brief 相机与枪管的Yay轴角度差
+	float Yaw_Angle_Offset;             //!< @brief 相机与枪管的Yay轴角度差（视觉也可以给）
 	float Pitch_Angle_Offset;           //!< @brief 相机与枪管的Pitch轴角度差
-    float Yaw_Send_Angle[Vision_Reserve_Angle_Len];           //!< @brief 发送四元数时的Yaw轴角度记录
-    float Pitch_Send_Angle[Vision_Reserve_Angle_Len];         //!< @brief 发送四元数时的Pitch轴角度记录
-    int8_t Rx_ID;                       //!< @brief 数据ID（用于数据对齐）
+    float Yaw_Send_Angle[Vision_Reserve_Angle_Len];    //!< @brief 发送四元数时的Yaw轴角度记录
+    float Pitch_Send_Angle[Vision_Reserve_Angle_Len];  //!< @brief 发送四元数时的Pitch轴角度记录
 
-    float Y_Speed;                      //!< @brief 电控预测yaw速度
-    float P_Speed;                      //!< @brief 电控预测pitch速度
+    float Y_Speed;                      //!< @brief 电控计算yaw速度
+    float P_Speed;                      //!< @brief 电控计算pitch速度
 
     uint8_t aim_start;                  //!< @brief 达到自瞄条件(可以自瞄)
 
     uint64_t StandardTimeStamp;         //!< @brief 时间戳与视觉对齐
     int64_t TimeStamp_setoff;           //!< @brief 补偿单片机时间戳
     uint32_t Rx_Time_Gap;               //!< @brief 接收PC时间间隔(ms)
-} Aim_Rx_t;
+}Aim_Rx_t;
 extern Aim_Rx_t Aim_Rx;
 
 /** @brief  发送给视觉的结构体 */
 typedef struct
 {
     uint64_t TimeStamp;      //!< @brief 时间戳
-    uint8_t Tx_ID;           //!< @brief 通讯数据ID（0-49）（用于数据对齐）
+    uint8_t  Tx_ID;          //!< @brief 通讯数据ID（0-49）（用于数据对齐）
     struct{
         float W;       
         float X;
@@ -297,5 +300,12 @@ extern int8_t fun_code_rx;
 extern int16_t id_rx;
 extern kalman_filterII_t Y_Kalman, P_Kalman;
 extern USBD_HandleTypeDef hUsbDeviceFS;
+/* 任务句柄 */
+extern TaskHandle_t  Task_Chassis_down_handle;
+extern TaskHandle_t  Task_Gimbal_handle;
+extern TaskHandle_t  Task_Shoot_handle;
+extern TaskHandle_t  Task_Protect_handle;
+extern TaskHandle_t  Task_IMU_handle;
+extern TaskHandle_t  Task_Remote_handle;
 
 #endif

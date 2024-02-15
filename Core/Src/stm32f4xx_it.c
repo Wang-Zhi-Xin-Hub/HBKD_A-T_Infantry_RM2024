@@ -236,8 +236,8 @@ void USART1_IRQHandler(void)
       Remote_flag = 0;
       HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[0], Remote_Usart1_Len);
     }
-
-    osSemaphoreRelease(Remote_Semaphore_Handle);
+    
+      osThreadFlagsSet(Task_Remote_handle, 0x01);
   }
 #if 0
   /* USER CODE END USART1_IRQn 0 */
@@ -274,8 +274,7 @@ void USART2_IRQHandler(void)
       IMU_flag = 0;
       HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
     }
-
-    osSemaphoreRelease(IMU_Semaphore_Handle);
+      osThreadFlagsSet(Task_IMU_handle, 0x01);
   }
 #if 0
   /* USER CODE END USART2_IRQn 0 */
