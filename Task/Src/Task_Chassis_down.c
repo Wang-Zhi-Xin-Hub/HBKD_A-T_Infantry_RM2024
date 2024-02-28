@@ -45,7 +45,7 @@ void Task_Chassis_down(void *pvParameters)
                 Chassis_Move();
 
 #if CHASSIS_RUN
-                CAN_Send_StdDataFrame(&hcan1, 0x110, (uint8_t *)&Communication_Speed_Tx);
+                CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
 #endif
             }
             else
@@ -241,5 +241,5 @@ void Send_UI_State()
     Communication_Action_Tx.CtrlMode_Tx = CtrlMode;
     Communication_Action_Tx.MidMode_Tx = MidMode;
 
-    CAN_Send_StdDataFrame(&hcan1, 0x120, (uint8_t *)&Communication_Action_Tx);
+    CAN_Send_StdDataFrame(&hcan2, 0x120, (uint8_t *)&Communication_Action_Tx);
 }
