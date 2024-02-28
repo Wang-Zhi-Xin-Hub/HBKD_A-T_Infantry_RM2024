@@ -38,13 +38,14 @@
 
 /** @brief 对应陀螺仪开启的功能 */
 #define Time_EN 0					//!< @brief 时间
-#define Acceleration_EN 1			//!< @brief 加速度
+#define Acceleration_EN 0			//!< @brief 加速度
 #define AngularVelocity_EN 1		//!< @brief 角速度
 #define EulerAngle_EN 1				//!< @brief 欧拉角
 #define MagneticFieldIntensity_EN 0 //!< @brief 磁场强度
 #define Pressure_Height_EN 0		//!< @brief 气压、高度
 #define Quaternions_EN 1			//!< @brief 四元数
 
+#define IMU_LEN     ( Time_EN + Acceleration_EN + AngularVelocity_EN + EulerAngle_EN + MagneticFieldIntensity_EN + Pressure_Height_EN + Quaternions_EN ) * 11
 /*! @brief 陀螺仪数据结构体 */
 typedef struct
 {

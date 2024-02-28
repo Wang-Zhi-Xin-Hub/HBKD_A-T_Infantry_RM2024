@@ -9,7 +9,7 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 void VCOMM_Receive_FS(uint8_t *Buf, uint32_t *Len) {
     if (Buf[0] == 0x5a) {
-        uint8_t fun = Buf[1];
+        uint8_t fun_code = Buf[1];
         uint16_t id = *((uint16_t * )(Buf + 2));
         uint16_t len = *((uint16_t * )(Buf + 4));
         if (len + 8 != *Len) {
@@ -18,7 +18,7 @@ void VCOMM_Receive_FS(uint8_t *Buf, uint32_t *Len) {
         }
         uint16_t crc = *((uint16_t * )(Buf + 6 + len));
         if (len == 0 || crc == Verify_CRC16_Check_Sum(Buf + 6, len)) {
-            VCOMM_CallBack(fun, id, Buf + 6, len);
+            VCOMM_CallBack(fun_code, id, Buf + 6, len);
         } else VCOMM_Error_CallBack(Buf, (uint8_t)(*Len));
     } else VCOMM_Error_CallBack(Buf, (uint8_t)(*Len));
 }

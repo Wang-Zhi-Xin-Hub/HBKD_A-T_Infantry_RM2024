@@ -4,7 +4,6 @@
  */
 #include "IMU.h"
 #include "string.h"
-#include "Variate.h"
 #include "time.h"
 
 /* IMU数据结构体定义 */
@@ -14,7 +13,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 {
 	if (Data[0] == 0x55)
 	{
-		for (uint16_t i = 1; i < IMU_Usart2_Len; i += 11)
+		for (uint16_t i = 1; i < IMU_LEN; i += 11)
 		{
 			switch (Data[i])
 			{

@@ -218,14 +218,13 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
   if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE) && __HAL_UART_GET_IT_SOURCE(&huart1, UART_IT_IDLE))
   {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
-    (void)huart1.Instance->SR;
-    (void)huart1.Instance->DR;
+        __HAL_UART_CLEAR_IDLEFLAG(&huart1);
 
-    HAL_UART_DMAStop(&huart1);
-    (void)hdma_usart1_rx.Instance->NDTR;
-
-    Feed_Dog(&Remote_Dog);
+        HAL_UART_DMAStop(&huart1);
+      
+        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx))
+        {
+              Feed_Dog(&Remote_Dog);
     if (Remote_flag == 0)
     {
       Remote_flag = 1;
@@ -236,7 +235,7 @@ void USART1_IRQHandler(void)
       Remote_flag = 0;
       HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[0], Remote_Usart1_Len);
     }
-    
+    }
       osThreadFlagsSet(Task_Remote_handle, 0x01);
   }
 #if 0

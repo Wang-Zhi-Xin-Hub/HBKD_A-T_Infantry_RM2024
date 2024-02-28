@@ -12,7 +12,7 @@ void Task_IMU_Rx(void *pvParameters)
     static uint8_t Hz_Flag = 0;
     for(;;)
     {
-        if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever) == osOK)
+        if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever))
         {
             if(IMU_flag == 1)
                 IMU_Receive(&IMU,Usart2_IMU_Dma[0]);
@@ -28,7 +28,7 @@ void Task_IMU_Rx(void *pvParameters)
                     kalmanII_Init(&Y_Kalman); 
                     kalmanII_Init(&P_Kalman); 
                 }
-                if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED && Hz_Flag == 1 && Aim_Rx.Rx_ID != -1)
+                if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED && Hz_Flag++ == 1 && Aim_Rx.Rx_ID != -1)
                 {
                     /* 接收到4次IMU数据立即发送当前次给视觉（125Hz） */
                     Aim_Tx.TimeStamp     = xTaskGetTickCount() +  Aim_Rx.TimeStamp_setoff;
@@ -40,13 +40,10 @@ void Task_IMU_Rx(void *pvParameters)
                     /* 将发送给视觉时陀螺仪的角度缓存起来 */
                     Aim_Rx.Yaw_Send_Angle[Aim_Tx.Tx_ID]     = IMU.EulerAngler.ContinuousYaw;
                     Aim_Rx.Pitch_Send_Angle[Aim_Tx.Tx_ID++] = IMU.EulerAngler.Pitch;
-                    /* 缓存长度由发送接收ID之间延迟差决定（环形缓冲区ID索引） */
-                    if( Aim_Tx.Tx_ID == Vision_Reserve_Angle_Len )
-                        Aim_Tx.Tx_ID = 0;
+                    /* 缓存长度由发送接收ID之间延迟差决定（环形缓冲区ID索引）*/
+                    Aim_Tx.Tx_ID = Aim_Tx.Tx_ID % Vision_Reserve_Angle_Len;
                     Hz_Flag = 0;
                 }
-                else
-                    Hz_Flag++;
             }
         }
     }

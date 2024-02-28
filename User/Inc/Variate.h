@@ -77,9 +77,9 @@
 #endif
 
 /** @brief 串口1遥控器数据长度 */
-#define Remote_Usart1_Len 18+1
+#define Remote_Usart1_Len   18 + 1
 /** @brief 串口2陀螺仪数据长度（由陀螺仪开启功能决定） */
-#define IMU_Usart2_Len ( Time_EN + Acceleration_EN + AngularVelocity_EN + EulerAngle_EN + MagneticFieldIntensity_EN + Pressure_Height_EN + Quaternions_EN ) * 11
+#define IMU_Usart2_Len      IMU_LEN + 1
 /** @brief 储存发送给视觉的角度的数组长度   */
 #define Vision_Reserve_Angle_Len 25
 
@@ -211,7 +211,7 @@ typedef struct
 extern Communication_Action_t Communication_Action_Tx;
 
 /** @brief  视觉通信接收结构体 */
-typedef struct __attribute__((packed)) 
+typedef struct
 {
     int8_t fun_code_rx;                 //!< @brief 通信功能码（0：时间戳对齐 1：自瞄角度）
     int16_t id_rx;                      //!< @brief 通信ID(视觉ID：0 电控ID：1)
@@ -248,7 +248,7 @@ extern Aim_Rx_t Aim_Rx;
 typedef struct
 {
     uint64_t TimeStamp;      //!< @brief 时间戳
-    uint8_t  Tx_ID;          //!< @brief 通讯数据ID（0-49）（用于数据对齐）
+    uint8_t  Tx_ID;          //!< @brief 通讯数据ID（用于数据对齐）
     struct{
         float W;       
         float X;

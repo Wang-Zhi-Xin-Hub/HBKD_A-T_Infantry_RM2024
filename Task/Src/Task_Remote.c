@@ -10,7 +10,7 @@ void Task_Remote_Rx(void *pvParameters)
 {
     for(;;)
     {
-        if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever) == osOK)
+        if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever))
         {
             if(Remote_flag==1)
                 Remote_Rx(Usart1_Remote_Dma[0]);
@@ -19,6 +19,7 @@ void Task_Remote_Rx(void *pvParameters)
         }
     }
 }
+
 /* 3个遥控器数据处理函数 */
 void RemoteControlProcess(Remote *rc)
 {

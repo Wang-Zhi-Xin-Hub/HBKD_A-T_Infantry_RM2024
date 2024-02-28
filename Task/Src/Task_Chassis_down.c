@@ -78,7 +78,7 @@ void Chassis_RC_Ctrl()
     break;
 
     case 2:
-        ChassisAction = CHASSIS_NORMAL;
+        ChassisAction = CHASSIS_FOLLOW;
         AimAction = AIM_STOP;
         ShootAction = SHOOT_STOP;
     break;
