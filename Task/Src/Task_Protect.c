@@ -4,7 +4,7 @@
  * @brief    断控保护（看门狗）任务
  */
 #include "Task_Protect.h"
-#define LOOK_STACK 1
+#define LOOK_STACK 0
 
 #if LOOK_STACK
 UBaseType_t uxHighWaterMark1,uxHighWaterMark2,uxHighWaterMark3,uxHighWaterMark4,uxHighWaterMark5,uxHighWaterMark6;

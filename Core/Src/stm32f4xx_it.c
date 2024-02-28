@@ -221,7 +221,7 @@ void USART1_IRQHandler(void)
 
         HAL_UART_DMAStop(&huart1);
       
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx))
+        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx) == 1)
         {
             Feed_Dog(&Remote_Dog);
             if (Remote_flag == 0)
@@ -258,7 +258,7 @@ void USART2_IRQHandler(void)
       
     HAL_UART_DMAStop(&huart2);
       
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx))
+        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx) == 1)
         {
             Feed_Dog(&IMU_Dog);
             if (IMU_flag == 0)
