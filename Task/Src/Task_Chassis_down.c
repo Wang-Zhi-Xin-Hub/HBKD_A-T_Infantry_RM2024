@@ -166,7 +166,7 @@ void Chassis_Move()
     static float Level_Gain, chassis_offset;
     static int16_t forward_back_ref = 0, left_right_ref = 0;
 
-    Level_Gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                      // 等级增益
+    Level_Gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
     chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;  // 底盘补偿角
 
     if (RC_CtrlData.key.Shift == 1)

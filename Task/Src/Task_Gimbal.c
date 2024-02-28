@@ -249,13 +249,13 @@ void Gimbal_Move()
             Angle_Ref.Yaw = Gyro_Ref.Yaw;
             Angle_Ref.Pitch = Gyro_Ref.Pitch;
         }
-            /* Yaw轴 */
+        /* Yaw轴 */
         PID_Control_Smis(IMU.EulerAngler.ContinuousYaw, Angle_Ref.Yaw, &Gimbal_Place_PIDS[YAW][Gyro], IMU.AngularVelocity.Z);
         PID_Control(IMU.AngularVelocity.Z, Gimbal_Place_PIDS[YAW][Gyro].pid_out, &Gimbal_Speed_PID[YAW][Gyro]);
         limit(Gimbal_Speed_PID[YAW][Gyro].pid_out, GM6020_LIMIT, -GM6020_LIMIT);
         Can2Send_Gimbal[YAW] = (int16_t)Gimbal_Speed_PID[YAW][Gyro].pid_out;
         
-            /* Pitch轴 */
+        /* Pitch轴 */
         PID_Control_Smis(IMU.EulerAngler.Pitch, Angle_Ref.Pitch, &Gimbal_Place_PIDS[PITCH][Gyro], IMU.AngularVelocity.Y);
         PID_Control(IMU.AngularVelocity.Y, Gimbal_Place_PIDS[PITCH][Gyro].pid_out, &Gimbal_Speed_PID[PITCH][Gyro]);
         limit(Gimbal_Speed_PID[PITCH][Gyro].pid_out, GM6020_LIMIT, -GM6020_LIMIT);

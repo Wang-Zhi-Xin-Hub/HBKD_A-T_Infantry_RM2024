@@ -205,30 +205,30 @@ void Shoot_Move()
         }
  
         /* 卡弹检测 */
-//        if(ShootAction != SHOOT_STUCKING)
-//        {
-//            if(ShootAction != SHOOT_RUNNING)
-//            {   /* 单发不到期望位置的5/4且速度很小时算卡弹 */
-//                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >= PLUCK_MOTOR_ONE/5 ) \
-//                    && ABS( Pluck_Motor.Speed ) <= 30 )
-//                    Stuck_time++;
-//                else
-//                    Stuck_time = 0;
-//            }
-//            else
-//            {   /* 连发速度很小时算卡弹 */
-//                if (ABS( Pluck_Motor.Speed ) <= 30 )
-//                    Stuck_time++;
-//                else
-//                    Stuck_time = 0;
-//            }
-//            /* 卡弹时间超过阈值便认为卡弹需退弹 */
-//            if(Stuck_time == 80)
-//            {
-//                Last_status = ShootAction;
-//                ShootAction = SHOOT_STUCKING;
-//            }
-//        }
+        if(ShootAction != SHOOT_STUCKING)
+        {
+            if(ShootAction != SHOOT_RUNNING)
+            {   /* 单发不到期望位置的5/4且速度很小时算卡弹 */
+                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >= PLUCK_MOTOR_ONE/5 ) \
+                    && ABS( Pluck_Motor.Speed ) <= 30 )
+                    Stuck_time++;
+                else
+                    Stuck_time = 0;
+            }
+            else
+            {   /* 连发速度很小时算卡弹 */
+                if (ABS( Pluck_Motor.Speed ) <= 30 )
+                    Stuck_time++;
+                else
+                    Stuck_time = 0;
+            }
+            /* 卡弹时间超过阈值便认为卡弹需退弹 */
+            if(Stuck_time == 80)
+            {
+                Last_status = ShootAction;
+                ShootAction = SHOOT_STUCKING;
+            }
+        }
     }
 }
 
