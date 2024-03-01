@@ -12,7 +12,7 @@ void Task_Remote_Rx(void *pvParameters)
     {
         if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever))
         {
-            if(Remote_flag==1)
+            if(Remote_flag)
                 Remote_Rx(Usart1_Remote_Dma[0]);
             else
                 Remote_Rx(Usart1_Remote_Dma[1]);

@@ -221,21 +221,18 @@ void USART1_IRQHandler(void)
 
         HAL_UART_DMAStop(&huart1);
       
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx) == 1)
+        Feed_Dog(&Remote_Dog);
+        if (!Remote_flag)
         {
-            Feed_Dog(&Remote_Dog);
-            if (Remote_flag == 0)
-            {
-                Remote_flag = 1;
-                HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[1], Remote_Usart1_Len);
-            }
-            else
-            {
-                Remote_flag = 0;
-                HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[0], Remote_Usart1_Len);
-            }
-            osThreadFlagsSet(Task_Remote_handle, 0x01);
+            Remote_flag = 1;
+            HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[1], Remote_Usart1_Len);
         }
+        else
+        {
+            Remote_flag = 0;
+            HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[0], Remote_Usart1_Len);
+        }
+        osThreadFlagsSet(Task_Remote_handle, 0x01);
   }
 #if 0
   /* USER CODE END USART1_IRQn 0 */
@@ -254,25 +251,22 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 0 */
   if (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) && __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_IDLE))
   {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart2);
-      
-    HAL_UART_DMAStop(&huart2);
-      
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart1_rx) == 1)
+        __HAL_UART_CLEAR_IDLEFLAG(&huart2);
+          
+        HAL_UART_DMAStop(&huart2);
+          
+        if (!IMU_flag)
         {
-            Feed_Dog(&IMU_Dog);
-            if (IMU_flag == 0)
-            {
-                IMU_flag = 1;
-                HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[1], IMU_Usart2_Len);
-            }
-            else
-            {
-                IMU_flag = 0;
-                HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
-            }
-            osThreadFlagsSet(Task_IMU_handle, 0x01);
+            IMU_flag = 1;
+            HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[1], IMU_Usart2_Len);
         }
+        else
+        {
+            IMU_flag = 0;
+            HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
+        }
+        Feed_Dog(&IMU_Dog);
+        osThreadFlagsSet(Task_IMU_handle, 0x01);  
   }
 #if 0
   /* USER CODE END USART2_IRQn 0 */

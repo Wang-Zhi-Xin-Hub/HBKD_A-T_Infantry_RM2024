@@ -28,20 +28,7 @@ void CanFilter_Init(CAN_HandleTypeDef *hcan) {
 
     /*! can1和CAN2使用不同的滤波器*/
     if (hcan->Instance == CAN1) {
-//        canfilter.FilterMode = CAN_FILTERMODE_IDLIST;   //列表模式
-//        canfilter.FilterScale = CAN_FILTERSCALE_16BIT;  //16位宽
-//        
-//        canfilter.FilterIdHigh = 0x101<<5;              //下板裁判系统信息ID
-//        canfilter.FilterIdLow = 0x201<<5;               //拨弹盘反馈ID
-//        canfilter.FilterMaskIdHigh = 0x202<<5;            //左摩擦轮反馈ID
-//        canfilter.FilterMaskIdLow = 0x203<<5;           //右摩擦轮反馈ID
         
-//        /* 掩码模式只接受0xX0X */
-//        canfilter.FilterIdHigh = 0x0000;
-//        canfilter.FilterIdLow = 0x0000;
-//        canfilter.FilterMaskIdHigh = 0x00F0<<5;
-//        canfilter.FilterMaskIdLow = 0x0000;
-
         /*! 主can的过滤器编号 */
         canfilter.FilterBank = 0;
 
@@ -56,6 +43,15 @@ void CanFilter_Init(CAN_HandleTypeDef *hcan) {
 
         /*! CAN_FilterFIFO1 */
         canfilter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+        
+        /* 过滤超电信息 */
+        canfilter.FilterMode = CAN_FILTERMODE_IDLIST;   //列表模式
+        canfilter.FilterScale = CAN_FILTERSCALE_16BIT;  //16位宽
+        
+        canfilter.FilterIdHigh = 0x101<<5;              //下板裁判系统信息ID
+        canfilter.FilterIdLow = 0x205<<5;               //Pitch轴
+        canfilter.FilterMaskIdHigh = 0x206<<5;          //Yaw轴
+        canfilter.FilterMaskIdLow = 0x000;
     }
 #endif
 

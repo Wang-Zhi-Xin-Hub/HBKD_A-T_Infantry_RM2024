@@ -8,10 +8,19 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     uint16_t CAN1_ID = CAN_Receive_DataFrame(&hcan1, CAN1_buff);
     switch (CAN1_ID)
     {
-        case 0x201:M2006_Receive( &Pluck_Motor, CAN1_buff); Feed_Dog(&Pluck_Dog);break;
-        case 0x202:RM3508_Receive( &Shoot_Motor[ LEFT ], CAN1_buff); Feed_Dog( &Shoot_Dog[ LEFT ]);break;   
-        case 0x203:RM3508_Receive( &Shoot_Motor[ RIGHT], CAN1_buff); Feed_Dog( &Shoot_Dog[ RIGHT]);break;   
-        default:break;
+        case 0x201: M2006_Receive(&Pluck_Motor, CAN1_buff);
+                    Feed_Dog(&Pluck_Dog);
+                    break;
+        
+        case 0x202: RM3508_Receive(&Shoot_Motor[LEFT], CAN1_buff); 
+                    Feed_Dog(&Shoot_Dog[LEFT]);
+                    break;   
+        
+        case 0x203: RM3508_Receive(&Shoot_Motor[RIGHT], CAN1_buff);
+                    Feed_Dog(&Shoot_Dog[RIGHT]);
+                    break;   
+        
+        default:    break;
     }
   }
 }
@@ -24,12 +33,62 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     uint16_t CAN2_ID = CAN_Receive_DataFrame(&hcan2, CAN2_buff);
     switch (CAN2_ID)
     {
-        case 0x101:memcpy(&Referee_data_Rx, CAN1_buff, sizeof(Referee_data_Rx)); Feed_Dog(&Down_Dog);break;
-        case 0x205:GM6020_Receive( &Gimbal_Motor[ PITCH], CAN2_buff); Feed_Dog( &Gimbal_Dog[ PITCH]);break;
-        case 0x206:GM6020_Receive( &Gimbal_Motor[  YAW ], CAN2_buff); Feed_Dog( &Gimbal_Dog[  YAW ]);break;
-        default:break;
+        case 0x101: memcpy(&Referee_data_Rx, CAN1_buff, sizeof(Referee_data_Rx));
+                    Feed_Dog(&Down_Dog);
+                    break;
+        
+        case 0x205: GM6020_Receive( &Gimbal_Motor[PITCH], CAN2_buff); 
+                    Feed_Dog(&Gimbal_Dog[PITCH]);
+                    break;
+        
+        case 0x206: GM6020_Receive( &Gimbal_Motor[YAW], CAN2_buff); 
+                    Feed_Dog(&Gimbal_Dog[YAW]);
+                    break;
+        
+        default:    break;
     }
   }
+}
+
+/* 虚拟串口PC通信接收回调函数 */
+void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
+{
+    static uint64_t Last_Time;
+    Aim_Rx.fun_code_rx = fun_code;
+    Aim_Rx.id_rx       = id;
+    if (Aim_Rx.id_rx == 0 && Aim_Rx.fun_code_rx == 0 )
+    {
+        /* 校准本地时间戳 */
+        memcpy(&Aim_Rx.StandardTimeStamp, data, sizeof(Aim_Rx.StandardTimeStamp));
+        Aim_Rx.TimeStamp_setoff = Aim_Rx.StandardTimeStamp - xTaskGetTickCount();
+        Last_Time               = xTaskGetTickCount();
+        Aim_Rx.Rx_ID            = 0;
+    }
+    
+    if ( Aim_Rx.id_rx == 0 && Aim_Rx.fun_code_rx == 1 )
+    {
+        /* 获得时间间隔*/
+        Aim_Rx.Rx_Time_Gap = xTaskGetTickCount() - Last_Time;
+        Last_Time          = xTaskGetTickCount();
+
+        /* 记录上次云台角度 */
+        Aim_Rx.Aim_Yaw_Last   = Aim_Rx.Aim_Yaw_Now;
+        Aim_Rx.Aim_Pitch_Last = Aim_Rx.Aim_Pitch_Now;
+
+        /* 转存数据 */
+        memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));
+        Aim_Rx.Yaw_Angle      = -Aim_Rx_infopack.yaw   + Aim_Rx.Yaw_Angle_Offset;
+        Aim_Rx.Pitch_Angle    = -Aim_Rx_infopack.pitch + Aim_Rx.Pitch_Angle_Offset;
+        Aim_Rx.Distance       =  Aim_Rx_infopack.distance;
+        Aim_Rx.Shoot_Flag     =  Aim_Rx_infopack.aim_shoot;
+        Aim_Rx.Tracker_Status =  Aim_Rx_infopack.tracker_status;
+        Aim_Rx.Rx_ID          =  Aim_Rx_infopack.rx_id;
+    }
+    if (Aim_Rx.id_rx == 1 && Aim_Rx.fun_code_rx == 1 )
+    {
+        memcpy(&Radar_Chassis_Speed, data, sizeof(Radar_Chassis_Speed));
+    }
+      Feed_Dog(&PC_Dog);
 }
 
 /* 喂狗回调函数 */

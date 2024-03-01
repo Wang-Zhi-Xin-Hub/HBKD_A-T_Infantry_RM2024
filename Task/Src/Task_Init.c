@@ -11,7 +11,7 @@ void Task_Init()
 {
     taskENTER_CRITICAL(); // 进入临界区
     
-    /* 看门狗初始化（初始化顺序则为看门狗ID顺序） */
+    /* 看门狗初始化（初始化顺序则为看门狗ID顺序（ID从1开始）） */
     WatchDog_Init(&Remote_Dog, 40);
     WatchDog_Init(&IMU_Dog, 20);
     WatchDog_Init(&Gimbal_Dog[YAW], 15);
@@ -22,12 +22,12 @@ void Task_Init()
     WatchDog_Init(&Down_Dog, 40);
     WatchDog_Init(&PC_Dog, 100);
     
-    /* CAN1初始化(上下板通信（速度，状态、裁判系统）、拨弹盘电机2006、两个摩擦轮电机3508) */
+    /* CAN1初始化（拨弹盘电机2006、两个摩擦轮电机3508) */
     CanFilter_Init(&hcan1);
     HAL_CAN_Start(&hcan1);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
     
-    /* CAN2初始化(Yaw轴6020、Pitch轴电机6020) */
+    /* CAN2初始化（上下板通信（速度，状态、裁判系统）、Yaw轴6020、Pitch轴电机6020) */
     CanFilter_Init(&hcan2);
     HAL_CAN_Start(&hcan2);
     HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);

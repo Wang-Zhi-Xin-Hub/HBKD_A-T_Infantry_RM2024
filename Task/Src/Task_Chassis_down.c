@@ -36,8 +36,10 @@ void Task_Chassis_down(void *pvParameters)
                             Chassis_Follow();
                         else if (ChassisAction == CHASSIS_SPIN)
                             Variable_Speed_Gyroscope();
-                        else
+                        else if(ChassisAction == CHASSIS_NORMAL)
                             Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;
+                        else
+                            Communication_Speed_Tx.Chassis_Speed.rotate_ref = Radar_Chassis_Speed.rotate_ref * 1000;
                     }
                     else
                         Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 2.4f;  //IMU离线只能控制底盘旋转转向
@@ -65,16 +67,16 @@ void Chassis_RC_Ctrl()
     {
     case 1:
         ChassisAction = CHASSIS_NORMAL;
-        AimAction = AIM_AID;
+        AimAction = AIM_STOP;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
             ShootAction = SHOOT_NORMAL;
     break;
 
     case 3:
-        ChassisAction = CHASSIS_NORMAL;
-        AimAction = AIM_AID;
+        ChassisAction = CHASSIS_RADAR;
+        AimAction = AIM_STOP;
         if(ShootAction != SHOOT_STUCKING)
-            ShootAction = SHOOT_READY;
+            ShootAction = SHOOT_STOP;
     break;
 
     case 2:
@@ -179,6 +181,13 @@ void Chassis_Move()
         left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain * 2.0f;
         forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain * 2.0f;
     }
+
+    if(ChassisAction == CHASSIS_RADAR)
+    {
+        forward_back_ref = Radar_Chassis_Speed.forward_back_ref * 2000;
+        left_right_ref   = Radar_Chassis_Speed.left_right_ref * 2000;
+    }
+
     if(Gimbal_State[YAW] == Device_Online)
     {
         /* 底盘补偿(小陀螺模式也能正常移动)*/

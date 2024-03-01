@@ -31,8 +31,8 @@ PID_Smis Pluck_Place_PIDS = {.Kp = 3, .Ki = 0, .Kd = -1, .limit = 5000};        
 PID Pluck_Speed_PID = {.Kp = 4, .Ki = 0, .Kd = 3, .limit = 5000};                //拨弹盘单发速度环
 PID Pluck_Continue_PID = {.Kp = 15, .Ki = 0, .Kd = 0, .limit = 5000};            //拨弹盘连发模式
 
-PID_Smis Chassis_Speed_PIDS = {.Kp = 2.8f, .Ki = 0, .Kd = 0, .limit = 5000};     //底盘跟随   位置环
-PID Chassis_Speed_PID = {.Kp =3.0f, .Ki = 0, .Kd = 0.1, .limit = 5000};          //           速度环
+PID_Smis Chassis_Speed_PIDS = {.Kp = 3.0f, .Ki = 0, .Kd = 6, .limit = 5000};     //底盘跟随   位置环
+PID Chassis_Speed_PID = {.Kp =3.0f, .Ki = 0, .Kd = 0, .limit = 5000};          //           速度环
 
 /* 卡尔曼初始化（用于自瞄）*/
 kalman_filterII_t Y_Kalman={
@@ -59,10 +59,13 @@ Communication_Speed_t Communication_Speed_Tx = {0};
 Communication_Action_t Communication_Action_Tx;
 Referee_data_t  Referee_data_Rx = {0};
 
-/* 视觉通信 */
+/* 视觉自瞄通信 */
 Aim_Rx_info Aim_Rx_infopack;
 Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = 0, .Pitch_Angle_Offset = 0, .Rx_ID = -1};
 Aim_Tx_t Aim_Tx = { .Tx_ID = 0};
+
+/* 雷达导航通信 */
+Radar_Chassis_Speed_Ref_t Radar_Chassis_Speed;
 
 /* 云台电机期望值 */
 PTZAngle_Ref_t Gyro_Ref;

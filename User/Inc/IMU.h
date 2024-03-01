@@ -36,9 +36,9 @@
 #include <stm32h7xx.h>
 #endif
 
-/** @brief 对应陀螺仪开启的功能 */
+/** @brief 对应陀螺仪开启的功能（需与IMU开启的对应） */
 #define Time_EN 0					//!< @brief 时间
-#define Acceleration_EN 0			//!< @brief 加速度
+#define Acceleration_EN 1			//!< @brief 加速度
 #define AngularVelocity_EN 1		//!< @brief 角速度
 #define EulerAngle_EN 1				//!< @brief 欧拉角
 #define MagneticFieldIntensity_EN 0 //!< @brief 磁场强度

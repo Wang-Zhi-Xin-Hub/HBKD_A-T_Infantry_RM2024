@@ -14,7 +14,7 @@ void Task_IMU_Rx(void *pvParameters)
     {
         if(osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever))
         {
-            if(IMU_flag == 1)
+            if(IMU_flag)
                 IMU_Receive(&IMU,Usart2_IMU_Dma[0]);
             else
             {
@@ -133,47 +133,4 @@ void Aim_Control()
         Y_Kalman.P_data[0] = 2; Y_Kalman.P_data[3] = 2;
         P_Kalman.P_data[0] = 2; P_Kalman.P_data[3] = 2;
     }
-}
-
-/* 虚拟串口PC通信接收回调函数 */
-void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
-{
-      static uint64_t Last_Time;
-      Aim_Rx.fun_code_rx = fun_code;
-      Aim_Rx.id_rx       = id;
-      if ( Aim_Rx.id_rx == 0 && Aim_Rx.fun_code_rx == 1 )
-      {
-            /* 获得时间间隔*/
-            Aim_Rx.Rx_Time_Gap = xTaskGetTickCount() - Last_Time;
-            Last_Time          = xTaskGetTickCount();
-
-            /* 记录上次云台角度 */
-            Aim_Rx.Aim_Yaw_Last   = Aim_Rx.Aim_Yaw_Now;
-            Aim_Rx.Aim_Pitch_Last = Aim_Rx.Aim_Pitch_Now;
-
-            /* 转存数据 */
-            memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));
-            Aim_Rx.Yaw_Angle      = -Aim_Rx_infopack.yaw   + Aim_Rx.Yaw_Angle_Offset;
-            Aim_Rx.Pitch_Angle    = -Aim_Rx_infopack.pitch + Aim_Rx.Pitch_Angle_Offset;
-            Aim_Rx.Distance       =  Aim_Rx_infopack.distance;
-            Aim_Rx.Shoot_Flag     =  Aim_Rx_infopack.aim_shoot;
-            Aim_Rx.Tracker_Status =  Aim_Rx_infopack.tracker_status;
-            Aim_Rx.Rx_ID          =  Aim_Rx_infopack.rx_id;
-      }
-      
-      if (Aim_Rx.id_rx == 0 && Aim_Rx.fun_code_rx == 0 )
-      {
-          /* 校准本地时间戳 */
-          memcpy(&Aim_Rx.StandardTimeStamp, data, sizeof(Aim_Rx.StandardTimeStamp));
-          Aim_Rx.TimeStamp_setoff = Aim_Rx.StandardTimeStamp - xTaskGetTickCount();
-          Last_Time               = xTaskGetTickCount();
-          Aim_Rx.Rx_ID            = 0;
-      }
-      Feed_Dog(&PC_Dog);
-}
-
-/* 虚拟串口PC通信错误回调函数 */
-void VCOMM_Error_CallBack(uint8_t *data, uint8_t len) {
-    UNUSED(data);
-    UNUSED(len);
 }

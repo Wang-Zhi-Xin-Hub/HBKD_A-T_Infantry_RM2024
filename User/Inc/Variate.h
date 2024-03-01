@@ -178,7 +178,8 @@ typedef enum
 {
 	CHASSIS_FOLLOW = 0, //!< @brief   底盘跟随模式
 	CHASSIS_SPIN = 1,	//!< @brief   小陀螺模式
-	CHASSIS_NORMAL = 2	//!< @brief   普通底盘（调试用）
+	CHASSIS_NORMAL = 2,	//!< @brief   普通底盘（调试用）
+    CHASSIS_RADAR = 3   //!< @brief   雷达导航模式
 } eChassisAction;
 extern eChassisAction ChassisAction;
 
@@ -210,11 +211,11 @@ typedef struct
 } Communication_Action_t;
 extern Communication_Action_t Communication_Action_Tx;
 
-/** @brief  视觉通信接收结构体 */
+/** @brief  视觉自瞄通信接收结构体 */
 typedef struct
 {
     int8_t fun_code_rx;                 //!< @brief 通信功能码（0：时间戳对齐 1：自瞄角度）
-    int16_t id_rx;                      //!< @brief 通信ID(视觉ID：0 电控ID：1)
+    int16_t id_rx;                      //!< @brief 通信ID(视觉ID：0)
     int8_t Rx_ID;                       //!< @brief 数据ID（用于数据对齐）
     
 	float Yaw_Angle;                    //!< @brief 视觉发来的Yaw自瞄角度差
@@ -271,6 +272,14 @@ typedef struct
 } Aim_Rx_info;
 #pragma pack()
 extern Aim_Rx_info Aim_Rx_infopack;
+/* 雷达 */
+typedef struct
+{
+    double forward_back_ref;  //!< @brief 前进方向速度
+    double left_right_ref;    //!< @brief 左右方向速度
+    double rotate_ref;        //!< @brief 旋转速度
+}Radar_Chassis_Speed_Ref_t;
+extern Radar_Chassis_Speed_Ref_t Radar_Chassis_Speed;
 
 /** @brief 声明外部变量，引入其他任务头文件中 */
 /* 遥控器 */
@@ -288,12 +297,11 @@ extern PID_Smis Gimbal_Place_PIDS[2][3], Pluck_Place_PIDS, Chassis_Speed_PIDS;
 extern PTZAngle_Ref_t Gyro_Ref, Mech_Ref, Aim_Ref, Gimbal_Ramp_Angle;
 extern float Gimbal_increase[2][2];
 /* 串口 */
-extern osSemaphoreId_t Remote_Semaphore_Handle, IMU_Semaphore_Handle;
 extern uint8_t Remote_flag,IMU_flag;
 extern uint8_t Usart1_Remote_Dma[2][Remote_Usart1_Len], Usart2_IMU_Dma[2][IMU_Usart2_Len];
 /* Can */
 extern int16_t Can1Send_Shoot[4], Can2Send_Gimbal[4];
-/* 状态 */
+/* 看门狗 */
 extern WatchDog_TypeDef Remote_Dog, IMU_Dog, Gimbal_Dog[2], Shoot_Dog[2], Pluck_Dog, Down_Dog, PC_Dog;
 /* 视觉 */
 extern int8_t fun_code_rx;
