@@ -21,6 +21,11 @@ void Chassis_Key_Ctrl(void);
 void Chassis_RC_Ctrl(void);
 
 /**
+* @brief 底盘移动
+*/
+void Chassis_Move(void);
+
+/**
 * @brief 底盘跟随
 */
 void Chassis_Follow(void);
@@ -31,9 +36,9 @@ void Chassis_Follow(void);
 void Variable_Speed_Gyroscope(void);
 
 /**
-* @brief 底盘驱动
+* @brief 底盘解算
 */
-void Chassis_Move(void);
+void Chassis_Offset(void);
 
 /**
 * @brief 发给下板当前机器人状态

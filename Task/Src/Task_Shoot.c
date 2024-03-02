@@ -51,13 +51,6 @@ void Task_Shoot(void *pvParameters)
 void Shoot_Rc_Ctrl()
 {
     static uint16_t normal_time = 0;
-//    switch (RC_CtrlData.rc.s1)
-//        {
-//			case 1:if(ShootAction != SHOOT_STUCKING)ShootAction = SHOOT_NORMAL;break;         
-//			case 3:if(ShootAction != SHOOT_STUCKING)ShootAction = SHOOT_READY;break;
-//			case 2:ShootAction = SHOOT_STOP;break;
-//        }
-        
     if(ShootAction == SHOOT_NORMAL)
         {
             normal_time++;

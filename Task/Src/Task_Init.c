@@ -48,7 +48,7 @@ void Task_Init()
     xTaskCreate((TaskFunction_t)Task_Shoot,        "Task_Shoot",        128, NULL, 5, &Task_Shoot_handle);
     xTaskCreate((TaskFunction_t)Task_IMU_Rx,       "IMU_Rx",            128, NULL, 6, &Task_IMU_handle);
     xTaskCreate((TaskFunction_t)Task_Remote_Rx,    "Remote_Rx",         128, NULL, 6, &Task_Remote_handle);
-    xTaskCreate((TaskFunction_t)Task_Protect,      "Task_Protect",      64, NULL, 7, &Task_Protect_handle);
+    xTaskCreate((TaskFunction_t)Task_Protect,      "Task_Protect",      64,  NULL, 7, &Task_Protect_handle);
     
     taskEXIT_CRITICAL(); // 退出临界区
     

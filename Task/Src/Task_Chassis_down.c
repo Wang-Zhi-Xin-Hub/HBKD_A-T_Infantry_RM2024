@@ -15,7 +15,6 @@ void Task_Chassis_down(void *pvParameters)
         if (systemState == SYSTEM_STARTING)
         {
             Chassis_Stop();
-            ChassisAction = CHASSIS_FOLLOW;
         }
         else if (systemState == SYSTEM_RUNNING)
         {
@@ -30,22 +29,8 @@ void Task_Chassis_down(void *pvParameters)
 
                 if (RemoteMode != STOP)
                 {
-                    if (CtrlMode == GYRO_MODE)
-                    {
-                        if (ChassisAction == CHASSIS_FOLLOW)
-                            Chassis_Follow();
-                        else if (ChassisAction == CHASSIS_SPIN)
-                            Variable_Speed_Gyroscope();
-                        else if(ChassisAction == CHASSIS_NORMAL)
-                            Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;
-                        else
-                            Communication_Speed_Tx.Chassis_Speed.rotate_ref = Radar_Chassis_Speed.rotate_ref * 1000;
-                    }
-                    else
-                        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 2.4f;  //IMU离线只能控制底盘旋转转向
+                    Chassis_Move();
                 }
-                Chassis_Move();
-
 #if CHASSIS_RUN
                 CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
 #endif
@@ -62,14 +47,14 @@ void Task_Chassis_down(void *pvParameters)
 /* 遥控器模式（底盘） */
 void Chassis_RC_Ctrl()
 {
-    /* 遥控器调试机器人（Shoot.c中需注释） */
+    /* 遥控器调试机器人 */
     switch (RC_CtrlData.rc.s1)
     {
     case 1:
         ChassisAction = CHASSIS_NORMAL;
         AimAction = AIM_STOP;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
-            ShootAction = SHOOT_NORMAL;
+            ShootAction = SHOOT_READY;
     break;
 
     case 3:
@@ -90,7 +75,7 @@ void Chassis_RC_Ctrl()
     CHASSIS_NORMAL //普通底盘(调试用)   SHOOT_STOP     //停止发射                 AIM_STOP  //关闭自瞄
     CHASSIS_SPIN   //小陀螺模式	        SHOOT_READY    //准备发射（摩擦轮启动）   AIM_AID   //辅瞄不自动射击
     CHASSIS_FOLLOW //底盘跟随模式       SHOOT_NORMAL   //单发                     AIM_AUTO  //自瞄+自动射击
-                                        SHOOT_RUNNING  //速射(单发超过0.3s变连发)
+    CHASSIS_RADAR  //雷达导航           SHOOT_RUNNING  //速射(单发超过0.3s变连发)
                                         SHOOT_STUCKING //卡弹退弹中
     */
 }
@@ -141,7 +126,28 @@ void Chassis_Key_Ctrl()
         Key_V = 0;
     }
 }
-
+/* 底盘移动 */
+void Chassis_Move()
+{
+    if (CtrlMode == GYRO_MODE)
+    {
+        if (ChassisAction == CHASSIS_FOLLOW)
+            Chassis_Follow();
+        else if (ChassisAction == CHASSIS_SPIN)
+            Variable_Speed_Gyroscope();
+        else
+            Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;
+    }
+    else
+    {
+    if(ChassisAction == CHASSIS_RADAR)
+        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Radar_Chassis_Speed.rotate_ref * CHASSIS_Speed_R * 1.5;
+    else
+        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 3.5f;  //IMU离线只能控制底盘旋转转向
+    }
+    /* 底盘补偿 */
+    Chassis_Offset();  
+}
 /* 底盘跟随 */
 void Chassis_Follow()
 {
@@ -163,29 +169,35 @@ void Chassis_Follow()
 }
 
 /* 底盘补偿计算 */
-void Chassis_Move()
+void Chassis_Offset()
 {
     static float Level_Gain, chassis_offset;
     static int16_t forward_back_ref = 0, left_right_ref = 0;
 
     Level_Gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
-    chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;  // 底盘补偿角
+    chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;   // 底盘补偿角
 
-    if (RC_CtrlData.key.Shift == 1)
+    if (RC_CtrlData.key.Shift)
     {
         left_right_ref   = Key_ch[0] * CHASSIS_Speed_H_Y * Level_Gain;
         forward_back_ref = Key_ch[1] * CHASSIS_Speed_H_X * Level_Gain;
     }
     else
     {
-        left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain * 2.0f;
-        forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain * 2.0f;
+        left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain;
+        forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain;
     }
 
     if(ChassisAction == CHASSIS_RADAR)
     {
-        forward_back_ref = Radar_Chassis_Speed.forward_back_ref * 2000;
-        left_right_ref   = Radar_Chassis_Speed.left_right_ref * 2000;
+        forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * CHASSIS_Speed_L_X * Level_Gain / 2.0f;
+        left_right_ref   =  - Radar_Chassis_Speed.left_right_ref   * CHASSIS_Speed_L_X * Level_Gain ;
+    }
+    else
+    {
+        Radar_Chassis_Speed.forward_back_ref = 0;
+        Radar_Chassis_Speed.left_right_ref   = 0;
+        Radar_Chassis_Speed.rotate_ref       = 0;  
     }
 
     if(Gimbal_State[YAW] == Device_Online)

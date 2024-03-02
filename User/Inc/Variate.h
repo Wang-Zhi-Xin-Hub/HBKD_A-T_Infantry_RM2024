@@ -77,7 +77,7 @@
 #endif
 
 /** @brief 串口1遥控器数据长度 */
-#define Remote_Usart1_Len   18 + 1
+#define Remote_Usart1_Len   RC_FRAME_LENGTH + 1
 /** @brief 串口2陀螺仪数据长度（由陀螺仪开启功能决定） */
 #define IMU_Usart2_Len      IMU_LEN + 1
 /** @brief 储存发送给视觉的角度的数组长度   */
