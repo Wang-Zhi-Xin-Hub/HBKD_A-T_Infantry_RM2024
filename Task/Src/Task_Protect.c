@@ -51,6 +51,6 @@ void Task_Protect(void *pvParameters)
         uxHighWaterMark6 = uxTaskGetStackHighWaterMark( Task_Remote_handle );
 #endif
         
-		vTaskDelayUntil(&currentTime, 2); // 绝对延时2ms
+		vTaskDelayUntil(&currentTime, 10); // 绝对延时10ms
 	}
 }

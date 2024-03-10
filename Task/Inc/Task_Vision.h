@@ -14,5 +14,16 @@
 * @brief 自瞄控制
 */
 void Aim_Control(void);
-
+/**
+* @brief 给视觉发送数据
+*/
+void Send_to_Vision(void);
+/**
+* @brief 坐标转换(N->B)
+*/
+void Coordinate_Transformation (RotationMatrix_t R, const float* PoseN, float* PoseB);
+/**
+* @brief 坐标点到原点的距离
+*/
+float DistanceToOrigin(float X, float Y, float Z);
 #endif

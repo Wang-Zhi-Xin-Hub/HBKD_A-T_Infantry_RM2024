@@ -12,15 +12,15 @@ void Task_Init()
     taskENTER_CRITICAL(); // 进入临界区
     
     /* 看门狗初始化（初始化顺序则为看门狗ID顺序（ID从1开始）） */
-    WatchDog_Init(&Remote_Dog, 40);
-    WatchDog_Init(&IMU_Dog, 20);
-    WatchDog_Init(&Gimbal_Dog[YAW], 15);
-    WatchDog_Init(&Gimbal_Dog[PITCH], 15);
-    WatchDog_Init(&Shoot_Dog[LEFT], 15);
-    WatchDog_Init(&Shoot_Dog[RIGHT], 15);
-    WatchDog_Init(&Pluck_Dog, 15);
-    WatchDog_Init(&Down_Dog, 40);
-    WatchDog_Init(&PC_Dog, 100);
+    WatchDog_Init(&Remote_Dog, 10);
+    WatchDog_Init(&IMU_Dog, 5);
+    WatchDog_Init(&Gimbal_Dog[YAW], 5);
+    WatchDog_Init(&Gimbal_Dog[PITCH], 5);
+    WatchDog_Init(&Shoot_Dog[LEFT], 5);
+    WatchDog_Init(&Shoot_Dog[RIGHT], 5);
+    WatchDog_Init(&Pluck_Dog, 5);
+    WatchDog_Init(&Down_Dog, 10);
+    WatchDog_Init(&PC_Dog, 10);
     
     /* CAN1初始化（拨弹盘电机2006、两个摩擦轮电机3508) */
     CanFilter_Init(&hcan1);

@@ -11,19 +11,19 @@
     /* 云台 */
 PID Gimbal_Speed_PID[2][3] = {{{.Kp = 3.3f, .Ki = 0, .Kd = 1.5f, .limit = 5000},       //Pitch轴6020电机 0           初始归中 0
                                {.Kp = 4, .Ki = 0, .Kd = 5, .limit = 5000},             //  速度环                    机械 1
-                               {.Kp = 25, .Ki = 0, .Kd = 3, .limit = 5000}},           //                            陀螺仪 2
+                               {.Kp = 30, .Ki = 0, .Kd = 3, .limit = 5000}},           //                            陀螺仪 2
 
                               {{.Kp = 4, .Ki = 0, .Kd = 5, .limit = 5000},            //Yaw轴6020电机 1         初始归中 0
                                {.Kp = 4.5f, .Ki = 0, .Kd = 3, .limit = 5000},         //                        机械 1
-                               {.Kp = 25, .Ki = 0, .Kd = 3, .limit = 5000}}};         //                        陀螺仪 2
+                               {.Kp = 30, .Ki = 0, .Kd = 3, .limit = 5000}}};         //                        陀螺仪 2
 
 PID_Smis Gimbal_Place_PIDS[2][3] = {{{.Kp = 7, .Ki = 0, .Kd = 2.5, .limit = 5000},         //Pitch轴6020电机 0      初始 0
                                     {.Kp = 20, .Ki = 0, .Kd = 6, .limit = 5000},           //    位置环             机械 1
-                                    {.Kp = 50, .Ki = 0, .Kd = 5, .limit = 5000}},          //                       陀螺仪 2
+                                    {.Kp = 60, .Ki = 0, .Kd = -6, .limit = 5000}},          //                       陀螺仪 2
 
                                     {{.Kp = 5, .Ki = 0, .Kd = 3, .limit = 5000},           //Yaw轴6020电机 1       初始 0
                                     {.Kp = 15, .Ki = 0, .Kd = 3, .limit = 5000},           //                      机械 1
-                                    {.Kp = 70, .Ki = 0, .Kd = 7, .limit = 5000}}};         //                      陀螺仪 2
+                                    {.Kp = 70, .Ki = 0, .Kd = -7, .limit = 5000}}};         //                      陀螺仪 2
     /* 发射机构 */
 PID Shoot_Speed_PID[2] = {{.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000},            //摩擦轮左
                           {.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000}};           //摩擦轮右
@@ -62,8 +62,8 @@ Referee_data_t  Referee_data_Rx = {0};
 
 /* 视觉自瞄通信 */
 Aim_Rx_info Aim_Rx_infopack;
-Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = 0, .Pitch_Angle_Offset = 0, .Rx_ID = -1};
-Aim_Tx_t Aim_Tx = { .Tx_ID = 0};
+Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = -2, .Pitch_Angle_Offset = -10, .Rx_Flag = -1};
+Aim_Tx_t Aim_Tx;
 
 /* 雷达导航通信 */
 Radar_Chassis_Speed_Ref_t Radar_Chassis_Speed;

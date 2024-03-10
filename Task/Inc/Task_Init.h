@@ -41,7 +41,7 @@
  *  Variate.h中有全局宏定义、声明外部变量、枚举状态量结构体定义等<br>
  *  Function.c中为全局调用功能函数<br>
  *  Function.h中为宏定义函数、函数声明<br>
- *  Callback_Function.c为can回调函数，看门狗回调函数<br>
+ *  Callback_Function.c为can回调函数，看门狗回调函数,虚拟串口回调函数<br>
  *  IMU.c为陀螺仪模块<br>
  *  IMU.h为陀螺仪头文件
  *
@@ -51,7 +51,7 @@
  * <tr><th>云台控制任务  <td>@see Task_Gimbal.h @see Task_Gimbal.c
  * <tr><th>发射控制任务  <td>@see Task_Shoot.h @see Task_Shoot.c
  * <tr><th>视觉(自瞄)任务  <td>@see Task_Vision.h @see Task_Vision.c
- * <tr><th>陀螺仪解包任务  <td>@see Task_Remote.h @see Task_Remote.c
+ * <tr><th>遥控器解包任务  <td>@see Task_Remote.h @see Task_Remote.c
  * <tr><th>断控保护看门狗任务  <td>@see Task_Protect.h @see Task_Protect.c
  * </table>
  */

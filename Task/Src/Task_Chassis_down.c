@@ -12,6 +12,7 @@ void Task_Chassis_down(void *pvParameters)
     for (;;)
     {
         currentTime = xTaskGetTickCount(); // 获取当前时间
+
         if (systemState == SYSTEM_STARTING)
         {
             Chassis_Stop();
@@ -52,20 +53,20 @@ void Chassis_RC_Ctrl()
     {
     case 1:
         ChassisAction = CHASSIS_NORMAL;
-        AimAction = AIM_STOP;
+        AimAction = AIM_AUTO;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
             ShootAction = SHOOT_READY;
     break;
 
     case 3:
-        ChassisAction = CHASSIS_RADAR;
-        AimAction = AIM_STOP;
+        ChassisAction = CHASSIS_NORMAL;
+        AimAction = AIM_AID;
         if(ShootAction != SHOOT_STUCKING)
-            ShootAction = SHOOT_STOP;
+            ShootAction = SHOOT_READY;
     break;
 
     case 2:
-        ChassisAction = CHASSIS_FOLLOW;
+        ChassisAction = CHASSIS_NORMAL;
         AimAction = AIM_STOP;
         ShootAction = SHOOT_STOP;
     break;
@@ -140,10 +141,10 @@ void Chassis_Move()
     }
     else
     {
-    if(ChassisAction == CHASSIS_RADAR)
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Radar_Chassis_Speed.rotate_ref * CHASSIS_Speed_R * 1.5;
-    else
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 3.5f;  //IMU离线只能控制底盘旋转转向
+        if(ChassisAction == CHASSIS_RADAR)
+            Communication_Speed_Tx.Chassis_Speed.rotate_ref =  - Radar_Chassis_Speed.rotate_ref * CHASSIS_Speed_R * 1.5;
+        else
+            Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 3.5f;  //IMU离线只能控制底盘旋转转向
     }
     /* 底盘补偿 */
     Chassis_Offset();  

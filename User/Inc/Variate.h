@@ -23,6 +23,7 @@
 #include "VCOMCOMM.h"
 #include "kalmanII.h"
 #include "usbd_def.h"
+#include "arm_math.h"
 
 /** @brief  3/4号步兵  */
 #define ROBOT_ID 3
@@ -45,8 +46,8 @@
 #define P_UP_limit 1200	     //!< @brief Pitch轴电机上限位
 #define P_DOWN_limit 300     //!< @brief Pitch轴电机下限位
 #define SHOOT_SPEED  5800    //!< @brief 摩擦轮电机速度环PID的期望值
-#define PLUCK_SPEED 1380     //!< @brief 拨弹盘电机连发时速度环PID的期望值
-#define PLUCK_MOTOR_ONE 1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
+#define PLUCK_SPEED -1380     //!< @brief 拨弹盘电机连发时速度环PID的期望值
+#define PLUCK_MOTOR_ONE -1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
 #endif
 
 /* 便于单独测试各机构，如果启动的机构电机不全在线，需注释对应任务里的电机在线判断 */
@@ -183,6 +184,11 @@ typedef enum
 } eChassisAction;
 extern eChassisAction ChassisAction;
 
+enum{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 /** @brief  下板发给上板(裁判系统） */
 typedef struct
 {
@@ -214,34 +220,23 @@ extern Communication_Action_t Communication_Action_Tx;
 /** @brief  视觉自瞄通信接收结构体 */
 typedef struct
 {
-    int8_t fun_code_rx;                 //!< @brief 通信功能码（0：时间戳对齐 1：自瞄角度）
-    int16_t id_rx;                      //!< @brief 通信ID(视觉ID：0)
-    int8_t Rx_ID;                       //!< @brief 数据ID（用于数据对齐）
+    int8_t Rx_Flag;                     //!< @brief 接收标志位（确定当前接收状态）
+    float Predicted_PoseB[3];           //!< @brief 云台系下的位姿
+    float Predicted_PoseN[3];           //!< @brief 惯性系下的位姿
+	float Predicted_Yaw;                //!< @brief 预测的Y轴角度
+	float Predicted_Pitch;              //!< @brief 预测的P轴角度
+	float Predicted_Distance;           //!< @brief 预测的距离
     
-	float Yaw_Angle;                    //!< @brief 视觉发来的Yaw自瞄角度差
-	float Pitch_Angle;                  //!< @brief 视觉发来的Pitch轴自瞄角度差
-	float Distance;                     //!< @brief 视觉发来的距离
-    uint8_t Shoot_Flag;                 //!< @brief 视觉发来的射击标志位
+    uint8_t Shoot_Flag;                 //!< @brief 射击标志位
   	uint8_t Tracker_Status;             //!< @brief 视觉发来的相机此时的跟踪状态 0丢失 1决策中 2跟踪中 3短暂丢失
     
-    float Aim_Yaw_Now;                  //!< @brief 这一次的自瞄角度
-    float Aim_Yaw_Last;                 //!< @brief 上一次的Yaw自瞄角度
-    float Aim_Pitch_Now;                //!< @brief 这一次的自瞄角度
-    float Aim_Pitch_Last;               //!< @brief 上一次的Pitch自瞄角度
-
-	float Yaw_Angle_Offset;             //!< @brief 相机与枪管的Yay轴角度差（视觉也可以给）
-	float Pitch_Angle_Offset;           //!< @brief 相机与枪管的Pitch轴角度差
-    float Yaw_Send_Angle[Vision_Reserve_Angle_Len];    //!< @brief 发送四元数时的Yaw轴角度记录
-    float Pitch_Send_Angle[Vision_Reserve_Angle_Len];  //!< @brief 发送四元数时的Pitch轴角度记录
-
-    float Y_Speed;                      //!< @brief 电控计算yaw速度
-    float P_Speed;                      //!< @brief 电控计算pitch速度
-
+	float Yaw_Angle_Offset;             //!< @brief IMU与枪管的Yay轴角度差
+	float Pitch_Angle_Offset;           //!< @brief IMU与枪管的Pitch轴角度差
+    
     uint8_t aim_start;                  //!< @brief 达到自瞄条件(可以自瞄)
 
     uint64_t StandardTimeStamp;         //!< @brief 时间戳与视觉对齐
     int64_t TimeStamp_setoff;           //!< @brief 补偿单片机时间戳
-    uint32_t Rx_Time_Gap;               //!< @brief 接收PC时间间隔(ms)
 }Aim_Rx_t;
 extern Aim_Rx_t Aim_Rx;
 
@@ -249,7 +244,6 @@ extern Aim_Rx_t Aim_Rx;
 typedef struct
 {
     uint64_t TimeStamp;      //!< @brief 时间戳
-    uint8_t  Tx_ID;          //!< @brief 通讯数据ID（用于数据对齐）
     struct{
         float W;       
         float X;
@@ -263,15 +257,23 @@ extern Aim_Tx_t Aim_Tx;
 #pragma pack(1)
 typedef struct
 {
-	float yaw;                           //!< @brief Yaw轴角度差
-	float pitch;                         //!< @brief Pitch轴角度差
-	float distance;                      //!< @brief 目标距离
-	uint8_t aim_shoot;                   //!< @brief 射击标志位
+    struct{
+        float X;                         
+        float Y;                           
+        float Z;                          
+        float Vx;
+        float Vy;
+        float Vz;
+        float theta;
+        float omega;
+        float r;
+    }pose;                               //!< @brief 目标位姿
+    uint8_t delay;                       //!< @brief 视觉程序延迟
     uint8_t tracker_status;              //!< @brief 相机追踪状态
-    uint8_t rx_id;                       //!< @brief 通讯数据id（用于数据对齐）
 } Aim_Rx_info;
 #pragma pack()
 extern Aim_Rx_info Aim_Rx_infopack;
+
 /* 雷达 */
 typedef struct
 {

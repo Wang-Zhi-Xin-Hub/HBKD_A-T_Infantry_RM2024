@@ -46,10 +46,14 @@
 #define Quaternions_EN 1			//!< @brief 四元数
 
 #define IMU_LEN     ( Time_EN + Acceleration_EN + AngularVelocity_EN + EulerAngle_EN + MagneticFieldIntensity_EN + Pressure_Height_EN + Quaternions_EN ) * 11
+
+typedef struct {
+       float r[3][3];
+    } RotationMatrix_t;   //!< @brief 旋转矩阵（IMU系到惯性系）
+
 /*! @brief 陀螺仪数据结构体 */
 typedef struct
 {
-
 #if Time_EN == 1
 	struct
 	{
@@ -114,13 +118,13 @@ typedef struct
 #endif
 
 #if Quaternions_EN == 1
-	struct
-	{
+	struct{
 		float W;
 		float X;
 		float Y;
 		float Z;
 	} Quaternions; //!< @brief 四元数
+RotationMatrix_t  RotationMatrix;
 #endif
 
 } IMU_Typedef;
@@ -145,5 +149,5 @@ typedef enum
 void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data);
 
 int64_t standard_to_stamp(IMU_Typedef *Dst);
-
+RotationMatrix_t  QuaternionToRotationMatrix(IMU_Typedef *Dst);
 #endif

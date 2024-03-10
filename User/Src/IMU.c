@@ -37,6 +37,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 				Dst->Quaternions.X = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f;
 				Dst->Quaternions.Y = ((int16_t)(Data[i + 6] << 8) | Data[i + 5]) / 32768.0f;
 				Dst->Quaternions.Z = ((int16_t)(Data[i + 8] << 8) | Data[i + 7]) / 32768.0f;
+                Dst->RotationMatrix = QuaternionToRotationMatrix(&IMU);
 				break;
 #endif
 
@@ -92,3 +93,20 @@ int64_t standard_to_stamp(IMU_Typedef *Dst)
 	return (int64_t)mktime(&stm) * 1000 + Dst->Time.MS; //毫秒时间戳
 }
 #endif
+
+RotationMatrix_t  QuaternionToRotationMatrix(IMU_Typedef *Dst) {
+    RotationMatrix_t R;
+    float w = Dst->Quaternions.W, x = Dst->Quaternions.X, y = Dst->Quaternions.Y, z = Dst->Quaternions.Z;
+    
+    R.r[0][0] = 1 - 2*y*y - 2*z*z;
+    R.r[0][1] = 2*x*y - 2*w*z;
+    R.r[0][2] = 2*x*z + 2*w*y;
+    R.r[1][0] = 2*x*y + 2*w*z;
+    R.r[1][1] = 1 - 2*x*x - 2*z*z;
+    R.r[1][2] = 2*y*z - 2*w*x;
+    R.r[2][0] = 2*x*z - 2*w*y;
+    R.r[2][1] = 2*y*z + 2*w*x;
+    R.r[2][2] = 1 - 2*x*x - 2*y*y;
+    
+    return R;
+}

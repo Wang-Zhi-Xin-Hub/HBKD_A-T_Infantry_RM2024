@@ -43,7 +43,7 @@ void Task_Gimbal(void *pvParameters)
                 Gimbal_Close();
 #endif
         }
-        vTaskDelayUntil(&currentTime, 2);
+        vTaskDelayUntil(&currentTime, 1);
     }
 }
 
@@ -98,7 +98,7 @@ void Median_Init()
         MotorSend(&hcan2, 0x1FF, Can2Send_Gimbal);
 #endif
     }
-    if (tim >= 800)
+    if (tim >= 600)
     {
         tim = 0;
         systemState = SYSTEM_RUNNING;
@@ -127,11 +127,11 @@ void Gimbal_Rc_Ctrl()
         CtrlMode = GYRO_MODE;
 
         /* Yaw轴 */
-        Gimbal_increase[YAW][Change_RC] = Key_ch[2] * A_Y;
+        Gimbal_increase[YAW][Change_RC] = -Key_ch[2] * A_Y;
         Gyro_Ref.Yaw -= (Gimbal_increase[YAW][Change_RC]);
 
         /* Pitch轴 */
-        Gimbal_increase[PITCH][Change_RC] = -Key_ch[3] * A_P;
+        Gimbal_increase[PITCH][Change_RC] = Key_ch[3] * A_P;
         Gyro_Ref.Pitch -= Gimbal_increase[PITCH][Change_RC];
         limit(Gyro_Ref.Pitch, IMU_UP_limit, IMU_DOWN_limit);
 
@@ -153,7 +153,7 @@ void Gimbal_Rc_Ctrl()
         /* Yaw轴转向是控制底盘旋转 */
 
         /* Pitch轴电机机械角度控制 */
-        Gimbal_increase[PITCH][Change_RC] = -Key_ch[3] * M_P;
+        Gimbal_increase[PITCH][Change_RC] = Key_ch[3] * M_P;
         Mech_Ref.Pitch -= Gimbal_increase[PITCH][Change_RC];
         limit(Mech_Ref.Pitch, P_UP_limit, P_DOWN_limit);
 
@@ -237,27 +237,27 @@ void Gimbal_Move()
     /* 不同模式下云台期望角获取 */
     if (CtrlMode == GYRO_MODE)
     {
-        if(Aim_Rx.aim_start)
-        {
-            /* 陀螺仪模式(自瞄) */
-            Angle_Ref.Yaw = Aim_Ref.Yaw;
-            Angle_Ref.Pitch = Aim_Ref.Pitch;
-        }
-        else
-        {
+//        if(Aim_Rx.aim_start)
+//        {
+//            /* 陀螺仪模式(自瞄) */
+//            Angle_Ref.Yaw   = Aim_Ref.Yaw;
+//            Angle_Ref.Pitch = Aim_Ref.Pitch;
+//        }
+//        else
+//        {
             /* 陀螺仪模式(无自瞄) */
-            Angle_Ref.Yaw = Gyro_Ref.Yaw;
+            Angle_Ref.Yaw   = Gyro_Ref.Yaw;
             Angle_Ref.Pitch = Gyro_Ref.Pitch;
-        }
+//        }
         /* Yaw轴 */
         PID_Control_Smis(IMU.EulerAngler.ContinuousYaw, Angle_Ref.Yaw, &Gimbal_Place_PIDS[YAW][Gyro], IMU.AngularVelocity.Z);
-        PID_Control(IMU.AngularVelocity.Z, Gimbal_Place_PIDS[YAW][Gyro].pid_out, &Gimbal_Speed_PID[YAW][Gyro]);
+        PID_Control(IMU.AngularVelocity.Z, -Gimbal_Place_PIDS[YAW][Gyro].pid_out, &Gimbal_Speed_PID[YAW][Gyro]);
         limit(Gimbal_Speed_PID[YAW][Gyro].pid_out, GM6020_LIMIT, -GM6020_LIMIT);
         Can2Send_Gimbal[YAW] = (int16_t)Gimbal_Speed_PID[YAW][Gyro].pid_out;
         
         /* Pitch轴 */
         PID_Control_Smis(IMU.EulerAngler.Pitch, Angle_Ref.Pitch, &Gimbal_Place_PIDS[PITCH][Gyro], IMU.AngularVelocity.Y);
-        PID_Control(IMU.AngularVelocity.Y, Gimbal_Place_PIDS[PITCH][Gyro].pid_out, &Gimbal_Speed_PID[PITCH][Gyro]);
+        PID_Control(IMU.AngularVelocity.Y, -Gimbal_Place_PIDS[PITCH][Gyro].pid_out, &Gimbal_Speed_PID[PITCH][Gyro]);
         limit(Gimbal_Speed_PID[PITCH][Gyro].pid_out, GM6020_LIMIT, -GM6020_LIMIT);
         Can2Send_Gimbal[PITCH] = (int16_t)Gimbal_Speed_PID[PITCH][Gyro].pid_out;
     }

@@ -37,7 +37,7 @@ void Task_Shoot(void *pvParameters)
 			else
 				Shoot_Close();	
         }
-        vTaskDelayUntil (&currentTime,2);
+        vTaskDelayUntil (&currentTime,1);
     }
 }
 /*
@@ -54,10 +54,10 @@ void Shoot_Rc_Ctrl()
     if(ShootAction == SHOOT_NORMAL)
         {
             normal_time++;
-            if(normal_time > 99)
+            if(normal_time > 199)
                 {
                     ShootAction = SHOOT_RUNNING;
-                    normal_time = 100;
+                    normal_time = 200;
                 }
         }else
         normal_time = 0;
@@ -96,10 +96,10 @@ void Shoot_Key_Ctrl()
     if(ShootAction == SHOOT_NORMAL)
     {
         normal_time++;
-        if(normal_time > 99)
+        if(normal_time > 199)
         {
             ShootAction = SHOOT_RUNNING;
-            normal_time = 100;
+            normal_time = 200;
         }
     }
     else
@@ -183,14 +183,14 @@ void Shoot_Move()
         }/* 卡弹退单 */
         else if(ShootAction == SHOOT_STUCKING)
         {
-            if (Stuck_time == 50 )
-                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE;
+            if (Stuck_time == 100 )
+                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE/2;
            Stuck_time++;
            PID_Control_Smis(Pluck_Motor.Angle_DEG, Stuck_Angle_Target, &Pluck_Place_PIDS, Pluck_Motor.Speed);
            PID_Control(Pluck_Motor.Speed, Pluck_Place_PIDS.pid_out, &Pluck_Speed_PID);
            limit(Pluck_Speed_PID.pid_out, M2006_LIMIT, -M2006_LIMIT); 
            Can1Send_Shoot[0] = (int16_t)Pluck_Speed_PID.pid_out;
-           if(Stuck_time >= 150)
+           if(Stuck_time >= 200)
            {
                ShootAction = Last_status;
                Stuck_time = 0;
@@ -202,7 +202,7 @@ void Shoot_Move()
         {
             if(ShootAction != SHOOT_RUNNING)
             {   /* 单发不到期望位置的5/4且速度很小时算卡弹 */
-                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >= PLUCK_MOTOR_ONE/5 ) \
+                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >=  ABS(PLUCK_MOTOR_ONE/5)  ) \
                     && ABS( Pluck_Motor.Speed ) <= 30 )
                     Stuck_time++;
                 else
@@ -216,7 +216,7 @@ void Shoot_Move()
                     Stuck_time = 0;
             }
             /* 卡弹时间超过阈值便认为卡弹需退弹 */
-            if(Stuck_time == 80)
+            if(Stuck_time == 100)
             {
                 Last_status = ShootAction;
                 ShootAction = SHOOT_STUCKING;
