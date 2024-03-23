@@ -33,8 +33,9 @@ typedef struct {
     float Power;                //!<@brief 功率
     uint16_t LsatAngle;         //!<@brief 上一次的机械角度
     int16_t r;                  //!<@brief 圈数
-    int32_t Angle;              //!<@brief 连续化机械角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
-    float Angle_DEG;            //!<@brief 连续化角度制角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
+    int32_t Angle;              //!<@brief 连续化机械角度
+    float Angle_DEG;            //!<@brief 连续化角度制角度
+    uint8_t flag;               //!<@brief 统计连续机械角度标志位，用于解决一圈偏差的问题，用户使用时应忽略，不要对其进行赋值
     struct PowerCOF_s {
         float ss;               //!<@brief 速度平方项系数
         float sc;               //!<@brief 速度,转矩电流乘积项系数
@@ -53,15 +54,16 @@ typedef struct {
     uint8_t temp;               //!<@brief 温度
     uint16_t LsatAngle;         //!<@brief 上一次的机械角度
     int16_t r;                  //!<@brief 圈数
-    int32_t Angle;              //!<@brief 连续化机械角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
-    float Angle_DEG;            //!<@brief 连续化角度制角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
+    int32_t Angle;              //!<@brief 连续化机械角度
+    float Angle_DEG;            //!<@brief 连续化角度制角度
+    uint8_t flag;               //!<@brief 统计连续机械角度标志位，用于解决一圈偏差的问题，但是无法解决开机时机械角度为0得情况,用户使用时应忽略，不要对其进行赋值
 } GM6020_TypeDef;
 
 /**
  * @brief RM3510电机数据结构体
  */
 typedef struct {
-    uint16_t MchanicalAngle;    //!<@brief 机械角度    
+    uint16_t MchanicalAngle;    //!<@brief 机械角度
     int16_t Speed;              //!<@brief 转速
 } RM3510_TypeDef;
 
@@ -75,6 +77,7 @@ typedef struct {
     int16_t r;                  //!<@brief 圈数
     int32_t Angle;              //!<@brief 连续化机械角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
     float Angle_DEG;            //!<@brief 连续化角度制角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
+    uint8_t flag;               //!<@brief 统计连续机械角度标志位，用于解决一圈偏差的问题，用户使用时应忽略，不要对其进行赋值
 } GM3510_TypeDef;
 
 /**
@@ -87,6 +90,7 @@ typedef struct {
     int16_t r;                  //!<@brief 圈数
     int32_t Angle;              //!<@brief 连续化机械角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
     float Angle_DEG;            //!<@brief 连续化角度制角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
+    uint8_t flag;               //!<@brief 统计连续机械角度标志位，用于解决一圈偏差的问题，用户使用时应忽略，不要对其进行赋值
 } M2006_TypeDef;
 
 /**
@@ -100,6 +104,7 @@ typedef struct {
     int16_t r;                  //!<@brief 圈数
     int32_t Angle;              //!<@brief 连续化机械角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
     float Angle_DEG;            //!<@brief 连续化角度制角度 @warning 由于启动时角度不确定，启动时连续化角度可能有一圈的偏差
+    uint8_t flag;               //!<@brief 统计连续机械角度标志位，用于解决一圈偏差的问题，用户使用时应忽略，不要对其进行赋值
 } RM6623_TypeDef;
 
 /**

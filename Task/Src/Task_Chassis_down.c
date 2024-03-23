@@ -1,11 +1,8 @@
-/**
- * @file     Task_Chassis_down.c
- * @date     2023-12-1
- * @brief    底盘控制（下板通信）任务
- */
 #include "Task_Chassis_down.h"
-
-/* 底盘控制（下板通信）主任务（底盘期望速度ID：0x110 各机构模式反馈（UI）ID：0x120） */
+/* 
+    TODO：底盘跟随看效果类似前馈算法 
+*/
+/* 底盘控制（下板通信）主任务 */
 void Task_Chassis_down(void *pvParameters)
 {
     static portTickType currentTime;
@@ -13,11 +10,11 @@ void Task_Chassis_down(void *pvParameters)
     {
         currentTime = xTaskGetTickCount(); // 获取当前时间
 
-        if (systemState == SYSTEM_STARTING)
+        if (systemState != SYSTEM_RUNNING)
         {
             Chassis_Stop();
         }
-        else if (systemState == SYSTEM_RUNNING)
+        else
         {
             if (Remote_State == Device_Online)
             {
@@ -30,7 +27,7 @@ void Task_Chassis_down(void *pvParameters)
 
                 if (RemoteMode != STOP)
                 {
-                    Chassis_Move();
+                    Chassis_Drive();
                 }
 #if CHASSIS_RUN
                 CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
@@ -39,9 +36,7 @@ void Task_Chassis_down(void *pvParameters)
             else
                 Chassis_Close();
         }
-        /* 各机构状态（发给下板动态UI显示） */
-        Send_UI_State();
-        vTaskDelayUntil(&currentTime, 2);
+        vTaskDelayUntil(&currentTime, 1);
     }
 }
 
@@ -52,29 +47,30 @@ void Chassis_RC_Ctrl()
     switch (RC_CtrlData.rc.s1)
     {
     case 1:
-        ChassisAction = CHASSIS_NORMAL;
-        AimAction = AIM_AUTO;
+        ChassisAction = CHASSIS_FOLLOW;
+        AimAction = AIM_STOP;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
             ShootAction = SHOOT_READY;
     break;
 
     case 3:
-        ChassisAction = CHASSIS_NORMAL;
-        AimAction = AIM_AID;
+        ChassisAction = CHASSIS_FOLLOW;
+        AimAction = AIM_STOP;
         if(ShootAction != SHOOT_STUCKING)
             ShootAction = SHOOT_READY;
     break;
 
     case 2:
-        ChassisAction = CHASSIS_NORMAL;
+        ChassisAction = CHASSIS_FOLLOW;
         AimAction = AIM_STOP;
         ShootAction = SHOOT_STOP;
     break;
     }
+    
     /*
     ChassisAction：                     ShootAction：                             AimAction：
     CHASSIS_NORMAL //普通底盘(调试用)   SHOOT_STOP     //停止发射                 AIM_STOP  //关闭自瞄
-    CHASSIS_SPIN   //小陀螺模式	        SHOOT_READY    //准备发射（摩擦轮启动）   AIM_AID   //辅瞄不自动射击
+    CHASSIS_SPIN   //小陀螺模式	        SHOOT_READY    //准备发射（摩擦轮启动）   AIM_AID   //自瞄不自动射击
     CHASSIS_FOLLOW //底盘跟随模式       SHOOT_NORMAL   //单发                     AIM_AUTO  //自瞄+自动射击
     CHASSIS_RADAR  //雷达导航           SHOOT_RUNNING  //速射(单发超过0.3s变连发)
                                         SHOOT_STUCKING //卡弹退弹中
@@ -127,8 +123,8 @@ void Chassis_Key_Ctrl()
         Key_V = 0;
     }
 }
-/* 底盘移动 */
-void Chassis_Move()
+/* 底盘驱动 */
+void Chassis_Drive()
 {
     if (CtrlMode == GYRO_MODE)
     {
@@ -147,11 +143,12 @@ void Chassis_Move()
             Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 3.5f;  //IMU离线只能控制底盘旋转转向
     }
     /* 底盘补偿 */
-    Chassis_Offset();  
+    Chassis_Offset();
 }
 /* 底盘跟随 */
 void Chassis_Follow()
 {
+    static uint16_t Follow_Speed_MAX = 3000;
     /* 底盘跟随（直接判断Yaw轴机械角度判断最近归中位置） */
     if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Right) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Left) )
     {
@@ -167,6 +164,7 @@ void Chassis_Follow()
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out;
         MidMode = BACK;
     }
+    limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
 }
 
 /* 底盘补偿计算 */
@@ -198,7 +196,7 @@ void Chassis_Offset()
     {
         Radar_Chassis_Speed.forward_back_ref = 0;
         Radar_Chassis_Speed.left_right_ref   = 0;
-        Radar_Chassis_Speed.rotate_ref       = 0;  
+        Radar_Chassis_Speed.rotate_ref       = 0;
     }
 
     if(Gimbal_State[YAW] == Device_Online)
@@ -217,6 +215,7 @@ void Chassis_Offset()
 /* 变速小陀螺 */
 void Variable_Speed_Gyroscope()
 {
+    static uint16_t Follow_Speed_MAX = 6000;
     static float time  = 0;  // 时间比例（变速区间0.75 - 1.30 每2ms变0.005f）
     static float angle = 0;  // 角度比例
     static float Variable_Speed_K = 1.0f;
@@ -252,6 +251,8 @@ void Variable_Speed_Gyroscope()
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = (2000 + Referee_data_Rx.robot_level * 150) * Variable_Speed_K;
     else
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = (3000 + Referee_data_Rx.robot_level * 250) * Variable_Speed_K;
+    
+    limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, - Follow_Speed_MAX);
 }
 
 /* 发送机构状态 */

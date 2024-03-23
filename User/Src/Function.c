@@ -1,6 +1,5 @@
 /*!
 * @file     Function.c
-* @date     2024-1-1
 * @brief    全局调用功能函数
 */
 #include "Function.h"

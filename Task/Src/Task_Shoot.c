@@ -1,10 +1,8 @@
-/*!
-* @file     Task_Shoot.c
-* @date     2024-1-1  
-* @brief    发射控制任务
-*/
 #include "Task_Shoot.h"
-
+/*  TODO:增益补偿
+    TODO:裁判系统反馈信息：热量，弹速
+    TODO:弹舱盖
+*/
 /* 射击控制主任务 */
 void Task_Shoot(void *pvParameters)
 {
@@ -12,12 +10,12 @@ void Task_Shoot(void *pvParameters)
 	for(;;)
 	{
         currentTime = xTaskGetTickCount(); 
-		if(systemState == SYSTEM_STARTING)
+		if(systemState != SYSTEM_RUNNING)
 		{
             AimAction = AIM_STOP;
 			ShootAction = SHOOT_STOP;
 		}
-		else if(systemState== SYSTEM_RUNNING)
+		else 
 		{
             if((Shoot_State[LEFT] == Device_Online)&&(Shoot_State[RIGHT] == Device_Online)&&(Pluck_State == Device_Online))
 			{
@@ -28,7 +26,7 @@ void Task_Shoot(void *pvParameters)
                 else
                     Shoot_Stop();
                 if(RemoteMode != STOP)
-                    Shoot_Move();
+                    Shoot_Drive();
 				
 #if SHOOT_RUN
             MotorSend(&hcan1, 0X200, Can1Send_Shoot);
@@ -107,7 +105,7 @@ void Shoot_Key_Ctrl()
 }
 
 /* 射击PID计算 */
-void Shoot_Move()
+void Shoot_Drive()
 {
     /* 局部变量 */
     static float Angle_Target = 0;                    //!< @brief拨弹盘期望角度

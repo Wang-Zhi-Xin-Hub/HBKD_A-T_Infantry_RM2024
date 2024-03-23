@@ -7,7 +7,6 @@
 
 #include "Chassis.h"
 
-
 void ChassisMotorSpeed_clean(ChassisSpeed_Ref_t *ref) {
     ref->forward_back_ref = 0;
     ref->left_right_ref = 0;

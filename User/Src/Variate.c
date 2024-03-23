@@ -1,6 +1,5 @@
 /*!
 * @file     Variate.c
-* @date     2024-1-1
 * @brief    定义全局变量及PID结构体
 */
 #include "Variate.h"
@@ -9,30 +8,30 @@
 
 #if ROBOT_ID == 3
     /* 云台 */
-PID Gimbal_Speed_PID[2][3] = {{{.Kp = 3.3f, .Ki = 0, .Kd = 1.5f, .limit = 5000},       //Pitch轴6020电机 0           初始归中 0
-                               {.Kp = 4, .Ki = 0, .Kd = 5, .limit = 5000},             //  速度环                    机械 1
+PID Gimbal_Speed_PID[2][3] = {{{.Kp = 3.3f, .Ki = 0, .Kd = 1.5f, .limit = 5000},      //Pitch轴6020电机 0           初始归中 0
+                               {.Kp = 8, .Ki = 0, .Kd = 2.5, .limit = 5000},           //  速度环                    机械 1
                                {.Kp = 30, .Ki = 0, .Kd = 3, .limit = 5000}},           //                            陀螺仪 2
 
-                              {{.Kp = 4, .Ki = 0, .Kd = 5, .limit = 5000},            //Yaw轴6020电机 1         初始归中 0
+                              {{.Kp = 4.5, .Ki = 0, .Kd = 3, .limit = 5000 },            //Yaw轴6020电机 1         初始归中 0
                                {.Kp = 4.5f, .Ki = 0, .Kd = 3, .limit = 5000},         //                        机械 1
-                               {.Kp = 30, .Ki = 0, .Kd = 3, .limit = 5000}}};         //                        陀螺仪 2
+                               {.Kp = 25, .Ki = 0, .Kd = 3, .limit = 5000}}};         //                        陀螺仪 2
 
-PID_Smis Gimbal_Place_PIDS[2][3] = {{{.Kp = 7, .Ki = 0, .Kd = 2.5, .limit = 5000},         //Pitch轴6020电机 0      初始 0
-                                    {.Kp = 20, .Ki = 0, .Kd = 6, .limit = 5000},           //    位置环             机械 1
-                                    {.Kp = 60, .Ki = 0, .Kd = -6, .limit = 5000}},          //                       陀螺仪 2
+PID_Smis Gimbal_Place_PIDS[2][3] = {{{.Kp = 7, .Ki = 0, .Kd = -2.5, .limit = 5000},         //Pitch轴6020电机 0      初始 0
+                                    {.Kp = 25, .Ki = 0, .Kd = -16, .limit = 5000},         //    位置环             机械 1
+                                    {.Kp = 60, .Ki = 0, .Kd = -6, .limit = 5000}},         //                       陀螺仪 2
 
-                                    {{.Kp = 5, .Ki = 0, .Kd = 3, .limit = 5000},           //Yaw轴6020电机 1       初始 0
-                                    {.Kp = 15, .Ki = 0, .Kd = 3, .limit = 5000},           //                      机械 1
+                                    {{.Kp = 2.5, .Ki = 0, .Kd = -18, .limit = 5000},           //Yaw轴6020电机 1       初始 0
+                                    {.Kp = 15, .Ki = 0, .Kd = -3, .limit = 5000},           //                      机械 1
                                     {.Kp = 70, .Ki = 0, .Kd = -7, .limit = 5000}}};         //                      陀螺仪 2
     /* 发射机构 */
 PID Shoot_Speed_PID[2] = {{.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000},            //摩擦轮左
                           {.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000}};           //摩擦轮右
-
+    
 PID_Smis Pluck_Place_PIDS = {.Kp = 3, .Ki = 0, .Kd = -1, .limit = 5000};         //拨弹盘单发位置环
 PID Pluck_Speed_PID = {.Kp = 4, .Ki = 0, .Kd = 3, .limit = 5000};                //拨弹盘单发速度环
 PID Pluck_Continue_PID = {.Kp = 15, .Ki = 0, .Kd = 0, .limit = 5000};            //拨弹盘连发模式
-    /* 底盘跟随 */
-PID_Smis Chassis_Speed_PIDS = {.Kp = 3.0f, .Ki = 0, .Kd = 6, .limit = 5000};     //底盘跟随   位置环
+   /* 底盘跟随 */
+PID_Smis Chassis_Speed_PIDS = {.Kp = 5.0f, .Ki = 0, .Kd = 6, .limit = 5000};     //底盘跟随   位置环
 PID Chassis_Speed_PID = {.Kp =3.0f, .Ki = 0, .Kd = 0, .limit = 5000};           //           速度环
 
 /* 卡尔曼初始化（用于自瞄滤波预测）*/
@@ -53,17 +52,13 @@ kalman_filterII_t P_Kalman={
 
 #elif ROBOT_ID == 4
 
+
 #endif
 
 /* 上下板通信 */
 Communication_Speed_t Communication_Speed_Tx = {0};
 Communication_Action_t Communication_Action_Tx;
 Referee_data_t  Referee_data_Rx = {0};
-
-/* 视觉自瞄通信 */
-Aim_Rx_info Aim_Rx_infopack;
-Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = -2, .Pitch_Angle_Offset = -10, .Rx_Flag = -1};
-Aim_Tx_t Aim_Tx;
 
 /* 雷达导航通信 */
 Radar_Chassis_Speed_Ref_t Radar_Chassis_Speed;

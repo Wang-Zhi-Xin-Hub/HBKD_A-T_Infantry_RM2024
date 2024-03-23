@@ -52,7 +52,6 @@ void WatchDog_Polling(void);
  */
 void WatchDog_Init(WatchDogp handle, uint32_t Life);
 
-
 /**
  * @brief 看门狗回调
  * @param[in] handle 看门狗结构体指针

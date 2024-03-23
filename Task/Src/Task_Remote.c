@@ -1,8 +1,3 @@
-/*!
-* @file     Task_Remote.c
-* @date     2024-1-1  
-* @brief    遥控器解包任务
-*/
 #include "Task_Remote.h"
 
 /* 遥控器接收任务 */

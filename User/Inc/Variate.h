@@ -1,13 +1,12 @@
 /*!
  * @file     Variate.h
- * @date     2024-1-1
  * @brief    全局宏定义，引用外部变量，定义结构体头文件
  */
 #ifndef __VARIATE_H
 #define __VARIATE_H
 #include "FreeRTOS.h"
 #include "task.h"
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "usart.h"
 #include "motor.h"
 #include "PID.h"
@@ -24,6 +23,8 @@
 #include "kalmanII.h"
 #include "usbd_def.h"
 #include "arm_math.h"
+#include "Task_Vision.h"
+#include "ramp.h"
 
 /** @brief  3/4号步兵  */
 #define ROBOT_ID 3
@@ -31,11 +32,9 @@
 /** @brief 不同ROBOT_ID不同参数 */
 #if ROBOT_ID == 3
 #define Yaw_Mid_Front 7880   //!< @brief Yaw轴电机机器人前方中值
-#define Pitch_Mid 675        //!< @brief Pitch电机云台水平值
+#define Pitch_Mid 675        //!< @brief Pitch轴电机云台水平值
 #define P_UP_limit 1200	     //!< @brief Pitch轴电机上限位
 #define P_DOWN_limit 300     //!< @brief Pitch轴电机下限位
-#define IMU_UP_limit 25      //!< @brief IMU上限位
-#define IMU_DOWN_limit -20   //!< @brief IMU下限位
 #define SHOOT_SPEED  4000    //!< @brief 摩擦轮电机速度环PID的期望值
 #define PLUCK_SPEED 1300     //!< @brief 拨弹盘电机连发时速度环PID的期望值 //新拨弹盘8000
 #define PLUCK_MOTOR_ONE 1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
@@ -58,7 +57,7 @@
 /** @brief    是否启动发射机构电机驱动 */
 #define SHOOT_RUN   1
 
-/** @brief 根据机器人正前方Yaw轴机械角度算出机器人剩下三个方向Yaw轴机械角度 */
+/* 根据机器人正前方Yaw轴机械角度算出机器人剩下三个方向Yaw轴机械角度 */
 #if (Yaw_Mid_Front + 2048) > 8191
 #define Yaw_Mid_Right Yaw_Mid_Front - 6143
 #else
@@ -81,8 +80,6 @@
 #define Remote_Usart1_Len   RC_FRAME_LENGTH + 1
 /** @brief 串口2陀螺仪数据长度（由陀螺仪开启功能决定） */
 #define IMU_Usart2_Len      IMU_LEN + 1
-/** @brief 储存发送给视觉的角度的数组长度   */
-#define Vision_Reserve_Angle_Len 25
 
 /** @brief 电机数据代号 */
 #define PITCH 0
@@ -97,32 +94,27 @@
 #define Mech 1
 #define Gyro 2
 
-/** @brief 电机参考速度 */
-#define STD_Speed 2380 // 标准速度1m/s
-#define STD_Omega 6142 // 标准速度1rpm/s
+/** @brief 重力 */
+#define GRAVITY 9.78f
 
-// 前后速度
+/** @brief 电机参考速度 */
+#define STD_Speed 2380    // 标准速度1m/s
+#define STD_Omega 6142    // 标准速度1rpm/s
+#define STD_Angle 0.36f	  // 角度制1rpm/s
+#define STD_MAngle 8.192  // 机械角度制1rpm/s
+
+/* 前后速度 */
 #define CHASSIS_Speed_H_X (STD_Speed * 2.5f) // 高速2.5m/s
 #define CHASSIS_Speed_L_X (STD_Speed * 1.5f) // 平时速度1.5m/s
 
-// 平移速度
+/* 平移速度 */
 #define CHASSIS_Speed_H_Y (STD_Speed * 2.5f) // 高速2.5m/s
 #define CHASSIS_Speed_L_Y (STD_Speed * 1.5f) // 平时速度1.5m/s
 
-// 旋转速度
+/* 旋转速度 */
 #define CHASSIS_Speed_R (STD_Omega / 4) // 转向速度 0.25rpm/s
 
-#define STD_Angle 0.72f			   // 角度制1rpm/s
-#define STD_MAngle 16.384f		   // 机械角度制1rpm/s
-#define A_Y (STD_Angle * 0.25f)	   // 角度制云台yaw速度参数0.25rpm/s
-#define A_Y_1 (STD_Angle * 0.75f)  // 角度制云台yaw速度参数0.75rpm/s
-#define A_Y_10 (STD_Angle * 0.10f) // 角度制云台yaw速度参数0.10rpm/s
-#define A_Y_H (STD_Angle * 1.0f)
-#define A_P (STD_Angle * 0.18f)	 // 角度制云台picth速度参数0.25rpm/s
-#define M_Y (STD_MAngle * 0.25f) // 机械角度制云台yaw速度参数0.25rpm/s
-#define M_P (STD_MAngle * 0.25f) // 机械角度制云台pitch速度参数0.25rpm/s
-
-/** @brief 设备状态 */
+/*设备状态 */
 typedef enum
 {
 	Device_Offline = 0,     //!< @brief 设备离线
@@ -131,7 +123,7 @@ typedef enum
 } eDeviceState;
 extern eDeviceState Remote_State, IMU_State, Gimbal_State[2], Shoot_State[2], Pluck_State, Down_State, PC_State;
 
-/** @brief  系统状态 */
+/* 系统状态 */
 typedef enum
 {
 	SYSTEM_STARTING = 0,     //!< @brief 正在启动
@@ -139,7 +131,7 @@ typedef enum
 } eSystemState;
 extern eSystemState systemState;
 
-/** @brief  云台模式 */
+/* 云台模式 */
 typedef enum
 {
 	MECH_MODE = 0,       //!< @brief  机械,云台跟随底盘
@@ -147,23 +139,25 @@ typedef enum
 } eCtrlMode;
 extern eCtrlMode CtrlMode;
 
-/** @brief  云台归中位置 */
+/* 云台归中位置 */
 typedef enum
 {
 	FRONT = 0,       //!< @brief   前方
 	BACK  = 1,       //!< @brief   后方
 } eMidMode;
 extern eMidMode MidMode;
-/** @brief  自瞄状态 */
+
+/* 自瞄状态 */
 typedef enum
 {
 	AIM_STOP = 0,     //!< @brief   关闭自瞄
-	AIM_AID  = 1,     //!< @brief   辅瞄不自动射击
+	AIM_AID  = 1,     //!< @brief   自瞄不自动射击
 	AIM_AUTO = 2,     //!< @brief   自瞄+自动射击
+    AIM_SHOOT = 3,    //!< @brief   不自瞄，只自动射击（定点打前哨）
 } eAimAction;
 extern eAimAction AimAction;
 
-/** @brief  射击模式 */
+/* 射击模式 */
 typedef enum
 {
 	SHOOT_STOP = 0,	        //!< @brief  停止发射（摩擦轮、拨弹盘停止）
@@ -174,7 +168,7 @@ typedef enum
 } eShootAction;
 extern eShootAction ShootAction;
 
-/** @brief  底盘模式 */
+/* 底盘模式 */
 typedef enum
 {
 	CHASSIS_FOLLOW = 0, //!< @brief   底盘跟随模式
@@ -184,12 +178,14 @@ typedef enum
 } eChassisAction;
 extern eChassisAction ChassisAction;
 
+/* 坐标系枚举 */
 enum{
     X = 0,
     Y = 1,
     Z = 2
 };
-/** @brief  下板发给上板(裁判系统） */
+
+/* 下板发给上板(裁判系统） */
 typedef struct
 {
 	int8_t robot_level;			   //!< @brief 机器人等级
@@ -198,7 +194,7 @@ typedef struct
 } Referee_data_t;
 extern Referee_data_t Referee_data_Rx;
 
-/** @brief  上板发给下板 (底盘速度) */
+/* 上板发给下板 (底盘速度) */
 typedef struct
 {
 	ChassisSpeed_Ref_t Chassis_Speed; //!< @brief 底盘期望速度
@@ -206,7 +202,7 @@ typedef struct
 } Communication_Speed_t;
 extern Communication_Speed_t Communication_Speed_Tx;
 
-/** @brief  上板发给下板(状态UI） */
+/* 上板发给下板(状态UI） */
 typedef struct
 {
 	eChassisAction ChassisAction_Tx; //!< @brief 底盘当前模式
@@ -216,63 +212,6 @@ typedef struct
 	eMidMode MidMode_Tx;			 //!< @brief 当前归中位置
 } Communication_Action_t;
 extern Communication_Action_t Communication_Action_Tx;
-
-/** @brief  视觉自瞄通信接收结构体 */
-typedef struct
-{
-    int8_t Rx_Flag;                     //!< @brief 接收标志位（确定当前接收状态）
-    float Predicted_PoseB[3];           //!< @brief 云台系下的位姿
-    float Predicted_PoseN[3];           //!< @brief 惯性系下的位姿
-	float Predicted_Yaw;                //!< @brief 预测的Y轴角度
-	float Predicted_Pitch;              //!< @brief 预测的P轴角度
-	float Predicted_Distance;           //!< @brief 预测的距离
-    
-    uint8_t Shoot_Flag;                 //!< @brief 射击标志位
-  	uint8_t Tracker_Status;             //!< @brief 视觉发来的相机此时的跟踪状态 0丢失 1决策中 2跟踪中 3短暂丢失
-    
-	float Yaw_Angle_Offset;             //!< @brief IMU与枪管的Yay轴角度差
-	float Pitch_Angle_Offset;           //!< @brief IMU与枪管的Pitch轴角度差
-    
-    uint8_t aim_start;                  //!< @brief 达到自瞄条件(可以自瞄)
-
-    uint64_t StandardTimeStamp;         //!< @brief 时间戳与视觉对齐
-    int64_t TimeStamp_setoff;           //!< @brief 补偿单片机时间戳
-}Aim_Rx_t;
-extern Aim_Rx_t Aim_Rx;
-
-/** @brief  发送给视觉的结构体 */
-typedef struct
-{
-    uint64_t TimeStamp;      //!< @brief 时间戳
-    struct{
-        float W;       
-        float X;
-        float Y;
-        float Z;
-    }Quaternions;            //!< @brief 四元数（视觉坐标转换）
-} Aim_Tx_t;
-extern Aim_Tx_t Aim_Tx;
-
-/** @brief  接收视觉数据的结构体（内存对齐） */
-#pragma pack(1)
-typedef struct
-{
-    struct{
-        float X;                         
-        float Y;                           
-        float Z;                          
-        float Vx;
-        float Vy;
-        float Vz;
-        float theta;
-        float omega;
-        float r;
-    }pose;                               //!< @brief 目标位姿
-    uint8_t delay;                       //!< @brief 视觉程序延迟
-    uint8_t tracker_status;              //!< @brief 相机追踪状态
-} Aim_Rx_info;
-#pragma pack()
-extern Aim_Rx_info Aim_Rx_infopack;
 
 /* 雷达 */
 typedef struct
@@ -306,8 +245,6 @@ extern int16_t Can1Send_Shoot[4], Can2Send_Gimbal[4];
 /* 看门狗 */
 extern WatchDog_TypeDef Remote_Dog, IMU_Dog, Gimbal_Dog[2], Shoot_Dog[2], Pluck_Dog, Down_Dog, PC_Dog;
 /* 视觉 */
-extern int8_t fun_code_rx;
-extern int16_t id_rx;
 extern kalman_filterII_t Y_Kalman, P_Kalman;
 extern USBD_HandleTypeDef hUsbDeviceFS;
 /* 任务句柄 */

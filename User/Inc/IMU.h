@@ -49,7 +49,7 @@
 
 typedef struct {
        float r[3][3];
-    } RotationMatrix_t;   //!< @brief 旋转矩阵（IMU系到惯性系）
+    } RotationMatrix_t;   //!< @brief 旋转矩阵（B->N）
 
 /*! @brief 陀螺仪数据结构体 */
 typedef struct

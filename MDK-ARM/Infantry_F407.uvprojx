@@ -550,6 +550,11 @@
               <FileType>1</FileType>
               <FilePath>..\RM_Lib\Src\WatchDog.c</FilePath>
             </File>
+            <File>
+              <FileName>ramp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\RM_Lib\Src\ramp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

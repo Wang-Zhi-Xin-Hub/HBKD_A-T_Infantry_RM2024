@@ -56,7 +56,7 @@ void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
     static uint64_t Last_Time;
     if (id == 0 && fun_code == 0 )
     {
-        /* 校准本地时间戳 */
+        /* 时间戳同步 */
         memcpy(&Aim_Rx.StandardTimeStamp, data, sizeof(Aim_Rx.StandardTimeStamp));
         Aim_Rx.TimeStamp_setoff = Aim_Rx.StandardTimeStamp - xTaskGetTickCount();
         Aim_Rx.Rx_Flag            = 0;
@@ -67,7 +67,6 @@ void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
         /* 转存数据 */
         memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));
         Aim_Rx.Rx_Flag = 1;
-        Aim_Rx.Tracker_Status =  Aim_Rx_infopack.tracker_status;
     }
     
     if (id == 1 && fun_code == 1 )

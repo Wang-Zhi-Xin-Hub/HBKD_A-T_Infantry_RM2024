@@ -220,7 +220,7 @@ void USART1_IRQHandler(void)
         __HAL_UART_CLEAR_IDLEFLAG(&huart1);
 
         HAL_UART_DMAStop(&huart1);
-      
+
         Feed_Dog(&Remote_Dog);
         if (!Remote_flag)
         {
@@ -252,9 +252,9 @@ void USART2_IRQHandler(void)
   if (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) && __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_IDLE))
   {
         __HAL_UART_CLEAR_IDLEFLAG(&huart2);
-          
+        
         HAL_UART_DMAStop(&huart2);
-          
+        
         if (!IMU_flag)
         {
             IMU_flag = 1;

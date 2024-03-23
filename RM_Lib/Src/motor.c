@@ -41,11 +41,15 @@ void RM3508_Receive(RM3508_TypeDef *Dst, uint8_t *Data) {
     Dst->temp = Data[6];
 
     int16_t diff = Dst->MchanicalAngle - Dst->LsatAngle;
-
-    if (diff > 4000)
-        Dst->r--;
-    if (diff < -4000)
-        Dst->r++;
+    if(diff != Dst->MchanicalAngle)
+        Dst->flag = 1;
+    if(Dst->flag == 1)
+    {
+        if (diff > 4000)
+            Dst->r--;
+        if (diff < -4000)
+            Dst->r++;
+    }
 
     Dst->Angle = Dst->r * 8192 + Dst->MchanicalAngle;
     Dst->Angle_DEG = Dst->Angle * 0.0439453125f;
@@ -59,10 +63,15 @@ void GM3510_Receive(GM3510_TypeDef *Dst, uint8_t *Data) {
 
     int16_t diff = Dst->MchanicalAngle - Dst->LsatAngle;
 
-    if (diff > 4000)
-        Dst->r--;
-    if (diff < -4000)
-        Dst->r++;
+    if(diff != Dst->MchanicalAngle)
+        Dst->flag = 1;
+    if(Dst->flag == 1)
+    {
+        if (diff > 4000)
+            Dst->r--;
+        if (diff < -4000)
+            Dst->r++;
+    }
 
     Dst->Angle = Dst->r * 8192 + Dst->MchanicalAngle;
     Dst->Angle_DEG = Dst->Angle * 0.0439453125f;
@@ -76,11 +85,15 @@ void GM6020_Receive(GM6020_TypeDef *Dst, uint8_t *Data) {
     Dst->temp = Data[6];
 
     int16_t diff = Dst->MchanicalAngle - Dst->LsatAngle;
-
-    if (diff > 4000)
-        Dst->r--;
-    if (diff < -4000)
-        Dst->r++;
+    if(diff != Dst->MchanicalAngle)
+        Dst->flag = 1;
+    if(Dst->flag == 1)
+    {
+        if (diff > 4000)
+            Dst->r--;
+        if (diff < -4000)
+            Dst->r++;
+    }
 
     Dst->Angle = Dst->r * 8192 + Dst->MchanicalAngle;
     Dst->Angle_DEG = Dst->Angle * 0.0439453125f;
@@ -93,10 +106,15 @@ void M2006_Receive(M2006_TypeDef *Dst, uint8_t *Data) {
 
     int16_t diff = Dst->MchanicalAngle - Dst->LsatAngle;
 
-    if (diff > 4000)
-        Dst->r--;
-    if (diff < -4000)
-        Dst->r++;
+    if(diff != Dst->MchanicalAngle)
+        Dst->flag = 1;
+    if(Dst->flag == 1)
+    {
+        if (diff > 4000)
+            Dst->r--;
+        if (diff < -4000)
+            Dst->r++;
+    }
 
     Dst->Angle = Dst->r * 8192 + Dst->MchanicalAngle;
     Dst->Angle_DEG = Dst->Angle * 0.0439453125f;

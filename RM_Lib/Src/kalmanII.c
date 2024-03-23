@@ -3,7 +3,6 @@
 #if defined(ARM_MATH_CM4) || defined(ARM_MATH_CM3) || defined(ARM_MATH_CM7)
 
 #include "arm_math.h"
-#include "Variate.h"
 
 static const float E_data[] = {1, 0, 0, 1};                   //!<@brief 二阶单位矩阵常量
 
@@ -54,7 +53,7 @@ float *KalmanII_Filter(kalman_filterII_t *I, float signal1, float signal2) {
     /* 2. P'(k) = A P(k-1) AT + Q */
     
        /* 协方差外插方程（预测器）方程依赖系统动态模型得出预测*/
-       /*P'(k)（当前预测值的方差）= A状态转移矩阵 * P(k-1)（上一刻估计值的方差) * AT（转置） + Q过程噪声 */
+       /* P'(k)（当前预测值的方差）= A状态转移矩阵 * P(k-1)（上一刻估计值的方差) * AT（转置） + Q过程噪声 */
        /* tips：方差为不确定性的平方 */
        
     /* 根据k-1时刻的方差预测k时刻的方差 */

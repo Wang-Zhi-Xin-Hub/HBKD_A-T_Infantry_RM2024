@@ -7,10 +7,11 @@
 
 #ifndef _PID_H_
 #define _PID_H_
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+    
+#include <math.h>
 
 /**
  * @brief 限幅宏函数
@@ -32,9 +33,11 @@ typedef struct {
     float Ki;           //!<@brief 积分系数
     float Kd;           //!<@brief 微分系数
     float limit;        //!<@brief 积分限幅
+    float error_thre;   //!<@brief 误差阈值，用于抗积分饱和
     float error_now;    //!<@brief 当前误差
     float error_last;   //!<@brief 上一次误差
     float error_inter;  //!<@brief 误差积分
+    float DeadBand;     //!<@brief 误差死区
     float pid_out;      //!<@brief PID输出
 } PID;
 
@@ -46,8 +49,10 @@ typedef struct {
     float Ki;           //!<@brief 积分系数
     float Kd;           //!<@brief 微分系数
     float limit;        //!<@brief 积分限幅
+    float error_thre;   //!<@brief 积分分离，用于抗积分饱和
     float error_now;    //!<@brief 当前误差
     float error_inter;  //!<@brief 误差积分
+    float DeadBand;     //!<@brief 误差死区
     float pid_out;      //!<@brief PID输出
 } PID_Smis;
 
