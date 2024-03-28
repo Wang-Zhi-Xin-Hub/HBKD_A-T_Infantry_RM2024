@@ -182,7 +182,7 @@ void Shoot_Drive()
         else if(ShootAction == SHOOT_STUCKING)
         {
             if (Stuck_time == 100 )
-                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE/2;
+                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE / 2;
            Stuck_time++;
            PID_Control_Smis(Pluck_Motor.Angle_DEG, Stuck_Angle_Target, &Pluck_Place_PIDS, Pluck_Motor.Speed);
            PID_Control(Pluck_Motor.Speed, Pluck_Place_PIDS.pid_out, &Pluck_Speed_PID);
@@ -200,7 +200,7 @@ void Shoot_Drive()
         {
             if(ShootAction != SHOOT_RUNNING)
             {   /* 单发不到期望位置的5/4且速度很小时算卡弹 */
-                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >=  ABS(PLUCK_MOTOR_ONE/5)  ) \
+                if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >=  ABS(PLUCK_MOTOR_ONE / 5)  ) \
                     && ABS( Pluck_Motor.Speed ) <= 30 )
                     Stuck_time++;
                 else

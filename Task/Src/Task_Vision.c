@@ -2,8 +2,9 @@
 
 /* 自瞄PC通信 */
 Aim_Rx_info Aim_Rx_infopack;
-Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = -2, .Pitch_Angle_Offset = 10, .Rx_Flag = -1};
+Aim_Rx_t Aim_Rx = { .Yaw_Angle_Offset = 5, .Pitch_Angle_Offset = -4, .Rx_Flag = -1};
 Aim_Tx_t Aim_Tx;
+
 /* 弹道模型 */
 Solve_Trajectory_Params_t st = {.k = 0.04f, .bullet_type = BULLET_17mm};
 
@@ -42,6 +43,9 @@ void Send_to_Vision()
         Aim_Tx.Quaternions.X = IMU.Quaternions.X;
         Aim_Tx.Quaternions.Y = IMU.Quaternions.Y;
         Aim_Tx.Quaternions.Z = IMU.Quaternions.Z;
+        Aim_Tx.EulerAngler.P = - IMU.EulerAngler.Pitch  / 180 * PI;   //此处不对应是因为ROS与IMU全局坐标轴不对应
+        Aim_Tx.EulerAngler.Y = - IMU.EulerAngler.Yaw    / 180 * PI;
+        Aim_Tx.EulerAngler.R =   IMU.EulerAngler.Roll   / 180 * PI;
         VCOMM_Transmit(1, 1, (uint8_t *)&Aim_Tx, sizeof(Aim_Tx));
         Count = 0;
     }
@@ -51,9 +55,10 @@ void Send_to_Vision()
 void Aim_Control()
 {
     /* 自瞄系统正在测试中 */
-    static uint16_t Shoot_time_Gap = 0;      //请求射击间隔
-    static uint16_t Predicted_time = 200 ,Predicted_Gap = 0, Bullet_fly_time = 150 , Bullet_Speed = 25;//动态预测时间
+    static uint16_t Shoot_time_Gap = 5, Shoot_time_cnt = 0;      //射击间隔
+    static uint16_t Predicted_time ,Predicted_Gap = 0, Bullet_fly_time = 100 , Bullet_Speed = 27;//动态预测时间
     const static uint8_t  Fixed_time = 100;  //静态预测时间(拨弹盘转动，通信延迟等)
+    static float horizontal_N, vertical_N, angle_pitch_N,distance_N ,Pitch_Angle_Compensation = 0;//弹道模型
 
       /* 自瞄模式 */
     if ( AimAction != AIM_STOP && PC_State == Device_Online)
@@ -70,32 +75,38 @@ void Aim_Control()
         /* 预测时间 */
         Predicted_time = Fixed_time + Aim_Rx_infopack.delay + Bullet_fly_time;
         
-        /* 角度更新(预测) */
+        /* PoseN更新(预测) */
+
         Aim_Rx.Predicted_PoseN[X] = (Aim_Rx_infopack.pose.X + Aim_Rx_infopack.pose.Vx * (Predicted_time + Predicted_Gap));
         Aim_Rx.Predicted_PoseN[Y] = (Aim_Rx_infopack.pose.Y + Aim_Rx_infopack.pose.Vy * (Predicted_time + Predicted_Gap));
-        Aim_Rx.Predicted_PoseN[Z] = (Aim_Rx_infopack.pose.Z + Aim_Rx_infopack.pose.Vz * (Predicted_time + Predicted_Gap));
+//        Aim_Rx.Predicted_PoseN[Z] = (Aim_Rx_infopack.pose.Z + Aim_Rx_infopack.pose.Vz * (Predicted_time + Predicted_Gap));
+        /* 无预测 */
 //        Aim_Rx.Predicted_PoseN[X] = (Aim_Rx_infopack.pose.X);
 //        Aim_Rx.Predicted_PoseN[Y] = (Aim_Rx_infopack.pose.Y);
-//        Aim_Rx.Predicted_PoseN[Z] = (Aim_Rx_infopack.pose.Z);
-        
-        /* 坐标转换(N—>B) */
+        Aim_Rx.Predicted_PoseN[Z] = (Aim_Rx_infopack.pose.Z);
+
+        /* 弹道数据更新 */
+//        horizontal_N = sqrt(Aim_Rx.Predicted_PoseN[X] * Aim_Rx.Predicted_PoseN[X] + Aim_Rx.Predicted_PoseN[Y] * Aim_Rx.Predicted_PoseN[Y]);
+//        vertical_N = - Aim_Rx.Predicted_PoseN[Z];
+//        distance_N = DistanceToOrigin(Aim_Rx_infopack.pose.X, Aim_Rx_infopack.pose.Y, Aim_Rx_infopack.pose.Z);
+//        angle_pitch_N = atan2(vertical_N, horizontal_N + 0.05);
+//        Bullet_fly_time = Get_bullet_fly_time(horizontal_N,Bullet_Speed,angle_pitch_N);
+//        Pitch_Angle_Compensation = Get_Pitch_Angle_Compensation(horizontal_N, vertical_N, Bullet_Speed);
+
+        /* Pose转换(N—>B) */
         Coordinate_Transformation(IMU.RotationMatrix, Aim_Rx.Predicted_PoseN, Aim_Rx.Predicted_PoseB);
-        
-        /* 换算角度 */
+
+        /* 由PoseB得到与当前Gimbal的差值 */
         Aim_Rx.Predicted_Yaw      = atan2( Aim_Rx.Predicted_PoseB[Y], -Aim_Rx.Predicted_PoseB[X]) * 180 / PI;
         Aim_Rx.Predicted_Pitch    = atan2( Aim_Rx.Predicted_PoseB[Z], -Aim_Rx.Predicted_PoseB[X]) * 180 / PI;
         Aim_Rx.Predicted_Distance = DistanceToOrigin(Aim_Rx.Predicted_PoseB[X], Aim_Rx.Predicted_PoseB[Y], Aim_Rx.Predicted_PoseB[Z]);
-        
-        /* 弹道模型TODO */
-        
-        Bullet_fly_time = Aim_Rx.Predicted_Distance / Bullet_Speed * 1000;
-        
-        /* 获得期望角度 */
-        Aim_Ref.Yaw   = IMU.EulerAngler.ContinuousYaw + Aim_Rx.Predicted_Yaw   + Aim_Rx.Yaw_Angle_Offset;
-        Aim_Ref.Pitch = IMU.EulerAngler.Pitch         - Aim_Rx.Predicted_Pitch + Aim_Rx.Pitch_Angle_Offset ;
-        
+
+        /* 得到期望角度（当前云台角度+角度差+枪管与IMU之间的偏差+弹道补偿） */
+        Aim_Ref.Yaw   = IMU.EulerAngler.ContinuousYaw - Aim_Rx.Predicted_Yaw   - Aim_Rx.Yaw_Angle_Offset;
+        Aim_Ref.Pitch = IMU.EulerAngler.Pitch         + Aim_Rx.Predicted_Pitch + Aim_Rx.Pitch_Angle_Offset + Pitch_Angle_Compensation;
+
         /* 能否开启自瞄 */
-        if( ( Aim_Rx_infopack.tracker_status == 2 ) || ( Aim_Rx_infopack.tracker_status == 3 ) )
+        if(  Aim_Rx_infopack.tracker_status )
         {
             /* 自瞄启动 */
             Aim_Rx.aim_start = 1;
@@ -110,21 +121,24 @@ void Aim_Control()
         /* 自瞄启动自动打弹 */
         if( AimAction == AIM_AUTO && Aim_Rx.aim_start && ShootAction != SHOOT_STOP)
         {
-            if( ABS (IMU.EulerAngler.ContinuousYaw - Aim_Ref.Yaw) <= 0.5f && ABS (IMU.EulerAngler.Pitch - Aim_Ref.Pitch) <= 8.5f )
+            if( ABS (IMU.EulerAngler.ContinuousYaw - Aim_Ref.Yaw) <= 0.5f && ABS (IMU.EulerAngler.Pitch - Aim_Ref.Pitch) <= 0.8f )
+//            if( ABS (IMU.EulerAngler.ContinuousYaw - Aim_Ref.Yaw) <= 0.4f && 
+//                ABS (IMU.EulerAngler.Pitch - Aim_Ref.Pitch) <= 0.4f &&
+//                Aim_Rx_infopack.pose.theta >=0 )
                 Aim_Rx.Shoot_Flag = 1;
             else
                 Aim_Rx.Shoot_Flag = 0;
             
-            if(Aim_Rx.Shoot_Flag && !Shoot_time_Gap)
+            if(Aim_Rx.Shoot_Flag && !Shoot_time_cnt)
             {
-                Shoot_time_Gap = 500;
+                Shoot_time_cnt = Shoot_time_Gap;
                 if(ShootAction != SHOOT_STUCKING)
                 ShootAction = SHOOT_NORMAL;
             }
             else
             {
-              if(Shoot_time_Gap)
-                  Shoot_time_Gap--;
+              if(Shoot_time_cnt)
+                  Shoot_time_cnt--;
               if(ShootAction != SHOOT_STUCKING)
                   ShootAction = SHOOT_READY;
             }

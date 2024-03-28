@@ -1,5 +1,7 @@
 #include "Task_Protect.h"
-/* TODO: 硬件看门狗，防止硬件出错*/
+/* TODO: 硬件看门狗，防止硬件出错
+TODO:读取任务运行函数不能用
+*/
 
 #define LOOK_STACK 0
 #if LOOK_STACK
@@ -41,8 +43,8 @@ void Task_Protect(void *pvParameters)
         
 #if LOOK_STACK
         //获得任务名 任务状态 优先级 剩余栈 任务序号
-        memset(taskListBuffer1, 0, 30*6);
-        vTaskList((char *)&taskListBuffer1); 
+        memset(taskListBuffer, 0, 30*6);
+        vTaskList((char *)&taskListBuffer); 
         //获取剩余Stack大小
         uxHighWaterMark[0] = uxTaskGetStackHighWaterMark( Task_Chassis_down_handle );
         uxHighWaterMark[1] = uxTaskGetStackHighWaterMark( Task_Gimbal_handle );

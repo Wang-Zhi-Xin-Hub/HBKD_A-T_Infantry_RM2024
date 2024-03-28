@@ -78,7 +78,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 	}
 }
 
-#if Time_EN == 1
+#if Time_EN
 /* 标准时间转换为时间戳 */
 int64_t standard_to_stamp(IMU_Typedef *Dst)
 {
@@ -93,7 +93,8 @@ int64_t standard_to_stamp(IMU_Typedef *Dst)
 	return (int64_t)mktime(&stm) * 1000 + Dst->Time.MS; //毫秒时间戳
 }
 #endif
-
+#if Quaternions_EN
+/* 旋转矩阵 */
 RotationMatrix_t  QuaternionToRotationMatrix(IMU_Typedef *Dst) {
     RotationMatrix_t R;
     float w = Dst->Quaternions.W, x = Dst->Quaternions.X, y = Dst->Quaternions.Y, z = Dst->Quaternions.Z;
@@ -110,3 +111,4 @@ RotationMatrix_t  QuaternionToRotationMatrix(IMU_Typedef *Dst) {
     
     return R;
 }
+#endif

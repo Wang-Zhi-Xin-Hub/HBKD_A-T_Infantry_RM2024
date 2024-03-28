@@ -42,6 +42,11 @@ typedef struct
         float Y;
         float Z;
     }Quaternions;            //!< @brief 四元数（视觉坐标转换）
+    struct{
+        float Y;
+        float P;
+        float R;
+    }EulerAngler;       //!< @brief 欧拉角
 } Aim_Tx_t;
 extern Aim_Tx_t Aim_Tx;
 
@@ -170,7 +175,7 @@ float completeAirResistanceModel(float s, float v, float angle);
 /**
 * @brief Pitch轴弹道补偿
 */
-float pitchTrajectoryCompensation(float s, float y, float v);
+float Get_Pitch_Angle_Compensation(float horizontal, float vertical, float bullet_speed);
 
 /**
 * @brief 根据最优决策得出被击打装甲板 自动解算弹道

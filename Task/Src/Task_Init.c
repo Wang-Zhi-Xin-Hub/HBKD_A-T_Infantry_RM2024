@@ -11,7 +11,7 @@ void Task_Init()
 {
     taskENTER_CRITICAL(); // 进入临界区
     
-    /* 看门狗初始化（初始化顺序则为看门狗ID顺序（ID从1开始）） */
+    /* 看门狗初始化（初始化顺序为看门狗ID顺序（ID从1开始）） */
     WatchDog_Init(&Remote_Dog, 10);
     WatchDog_Init(&IMU_Dog, 5);
     WatchDog_Init(&Gimbal_Dog[YAW], 5);

@@ -1,6 +1,6 @@
 #include "Task_Chassis_down.h"
 /* 
-    TODO：底盘跟随看效果类似前馈算法 
+    TODO：底盘跟随看效果类似前馈算法(如果PID也可以就算了)
 */
 /* 底盘控制（下板通信）主任务 */
 void Task_Chassis_down(void *pvParameters)
@@ -47,21 +47,21 @@ void Chassis_RC_Ctrl()
     switch (RC_CtrlData.rc.s1)
     {
     case 1:
-        ChassisAction = CHASSIS_FOLLOW;
-        AimAction = AIM_STOP;
+        ChassisAction = CHASSIS_NORMAL;
+        AimAction = AIM_AUTO;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
             ShootAction = SHOOT_READY;
     break;
 
     case 3:
-        ChassisAction = CHASSIS_FOLLOW;
-        AimAction = AIM_STOP;
+        ChassisAction = CHASSIS_NORMAL;
+        AimAction = AIM_AID;
         if(ShootAction != SHOOT_STUCKING)
             ShootAction = SHOOT_READY;
     break;
 
     case 2:
-        ChassisAction = CHASSIS_FOLLOW;
+        ChassisAction = CHASSIS_NORMAL;
         AimAction = AIM_STOP;
         ShootAction = SHOOT_STOP;
     break;
@@ -95,11 +95,7 @@ void Chassis_Key_Ctrl()
         Key_ch[0] = 1;
     else
         Key_ch[0] = 0;
-    /* Shift加速 */
-    if (RC_CtrlData.key.Shift)
-        Communication_Speed_Tx.Shift_flag = 1;
-    else
-        Communication_Speed_Tx.Shift_flag = 0;
+
     /* R键切换底盘模式 */
     if (RC_CtrlData.key.R == 1 && Key_R == 0)
     {
@@ -148,23 +144,26 @@ void Chassis_Drive()
 /* 底盘跟随 */
 void Chassis_Follow()
 {
-    static uint16_t Follow_Speed_MAX = 3000;
+    static uint16_t Follow_Speed_MAX = 8000;
     /* 底盘跟随（直接判断Yaw轴机械角度判断最近归中位置） */
-    if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Right) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Left) )
+    if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Left) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Right) )
     {
-        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Front), &Chassis_Speed_PIDS, IMU.AngularVelocity.Z);
+        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Front), &Chassis_Speed_PIDS, Gimbal_Motor[YAW].Speed);
         PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out;
         MidMode = FRONT;
     }
     else
     {
-        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Back), &Chassis_Speed_PIDS, IMU.AngularVelocity.Z);
+        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Back), &Chassis_Speed_PIDS, Gimbal_Motor[YAW].Speed);
         PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out;
         MidMode = BACK;
     }
-    limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
+        limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
+    #if !GIMBAL_RUN
+        Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;  //云台只有在IMU的控制才能实现底盘跟随
+    #endif
 }
 
 /* 底盘补偿计算 */
@@ -186,7 +185,8 @@ void Chassis_Offset()
         left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain;
         forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain;
     }
-
+    
+    /* 雷达导航模式 */
     if(ChassisAction == CHASSIS_RADAR)
     {
         forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * CHASSIS_Speed_L_X * Level_Gain / 2.0f;
@@ -198,7 +198,8 @@ void Chassis_Offset()
         Radar_Chassis_Speed.left_right_ref   = 0;
         Radar_Chassis_Speed.rotate_ref       = 0;
     }
-
+    
+    /* Y轴在线才能解算补偿 */
     if(Gimbal_State[YAW] == Device_Online)
     {
         /* 底盘补偿(小陀螺模式也能正常移动)*/

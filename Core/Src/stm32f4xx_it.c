@@ -266,7 +266,8 @@ void USART2_IRQHandler(void)
             HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
         }
         Feed_Dog(&IMU_Dog);
-        osThreadFlagsSet(Task_IMU_handle, 0x01);  
+        osThreadFlagsSet(Task_IMU_handle, 0x01); 
+        
   }
 #if 0
   /* USER CODE END USART2_IRQn 0 */
