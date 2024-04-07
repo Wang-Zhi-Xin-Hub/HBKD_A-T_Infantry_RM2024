@@ -68,6 +68,17 @@ typedef struct {
     float error_last;   //!<@brief 上上次误差
     float increament;   //!<@brief PID增量
 } PID_ADD;
+/**
+ * @brief 前馈控制
+ */
+typedef struct{
+	  float K1;
+	  float K2;
+	  float Last_DeltIn;
+	  float Now_DeltIn;
+	  float Out;
+	  float OutMax;
+}FeedForward_Typedef;
 
 /**
  * @brief 标准位置式PID
@@ -94,6 +105,8 @@ void PID_Control_Smis(float current, float expected, PID_Smis *data, float speed
  * @return PID增量
  */
 float PID_Increment(float current, float expect, PID_ADD *parameter);
+/*  */
+float FeedForward_Calc(FeedForward_Typedef *FF);
 
 #ifdef __cplusplus
 }

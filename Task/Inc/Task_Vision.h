@@ -10,24 +10,31 @@
 #include "Variate.h"
 #include "Function.h"
 
-/* 视觉自瞄信息 */
+/* 目标位姿 */
+typedef struct{
+        float X;
+        float Y;
+        float Z;
+        float Distance;
+}Pose_t;
+
+/* 储存自瞄信息 */
 typedef struct
 {
-    int8_t Rx_Flag;                     //!< @brief 接收标志位（确定当前接收状态）
-    float Predicted_PoseB[3];           //!< @brief 云台系下的位姿
-    float Predicted_PoseN[3];           //!< @brief 惯性系下的位姿
-	float Predicted_Yaw;                //!< @brief 预测的Y轴角度
-	float Predicted_Pitch;              //!< @brief 预测的P轴角度
-	float Predicted_Distance;           //!< @brief 预测的距离
+    int8_t Rx_flag;                     //!< @brief 接收状态
     
-    uint8_t Shoot_Flag;                 //!< @brief 射击标志位
+    Pose_t Predicted_PoseB;           //!< @brief 云台系下的位姿
+    Pose_t Predicted_PoseN;           //!< @brief 惯性系下的位姿
+    Pose_t Predicted_Armor_Pose[4];   //!< @brief 装甲板位姿
     
+    float Predicted_Yaw;                //!< @brief 预测的Y轴角度
+    float Predicted_Pitch;              //!< @brief 预测的P轴角度
+
 	float Yaw_Angle_Offset;             //!< @brief IMU与枪管的Yay轴角度差
 	float Pitch_Angle_Offset;           //!< @brief IMU与枪管的Pitch轴角度差
     
-    uint8_t aim_start;                  //!< @brief 达到自瞄条件(可以自瞄)
-
-    uint64_t StandardTimeStamp;         //!< @brief 时间戳与视觉对齐
+    uint8_t aim_runing;                  //!< @brief 自瞄启动
+    
     int64_t TimeStamp_setoff;           //!< @brief 补偿单片机时间戳
 }Aim_Rx_t;
 extern Aim_Rx_t Aim_Rx;
@@ -35,18 +42,17 @@ extern Aim_Rx_t Aim_Rx;
 /* 发送给视觉的结构体 */
 typedef struct
 {
-    uint64_t TimeStamp;      //!< @brief 时间戳
+    uint64_t TimeStamp;      //!< @brief 对齐后的时间戳
     struct{
         float W;       
         float X;
         float Y;
         float Z;
     }Quaternions;            //!< @brief 四元数（视觉坐标转换）
-    struct{
-        float Y;
-        float P;
-        float R;
-    }EulerAngler;       //!< @brief 欧拉角
+    uint16_t Time_Gap;
+    float X;
+    float Y;
+    float Z;
 } Aim_Tx_t;
 extern Aim_Tx_t Aim_Tx;
 
@@ -55,16 +61,19 @@ extern Aim_Tx_t Aim_Tx;
 typedef struct
 {
     struct{
-        float X;                         
-        float Y;                           
-        float Z;                          
-        float Vx;
+        float X;                        //!< @brief 全局坐标系下车辆中心点的坐标
+        float Y;
+        float Z;
+        float Vx;                       //!< @brief 全局坐标系下车辆中心点的线速度
         float Vy;
         float Vz;
-        float theta;
-        float omega;
-        float r;
-    }pose;                               //!< @brief 目标位姿
+        float theta;                    //!< @brief 目标装甲板朝向角
+        float omega;                    //!< @brief 目标装甲板朝向角的角速度
+        float r1;                       //!< @brief 目标中心到前后装甲板的距离
+        float r2;                       //!< @brief 目标中心到左右装甲板的距离
+        float dz;                       //!< @brief 另一对装甲板的相对于被跟踪装甲板的高度差
+        int8_t armor_number;            //!< @brief 装甲板的数量
+    }pose;                               //!< @brief 目标车辆位姿
     uint8_t delay;                       //!< @brief 视觉程序延迟
     uint8_t tracker_status;              //!< @brief 相机追踪状态
 } Aim_Rx_info;
@@ -95,6 +104,7 @@ typedef enum {
     BULLET_17mm = 17,                //!< @brief 17mm弹丸
     BULLET_42mm = 42                 //!< @brief 42mm弹丸
 }BULLET_TYPE;
+
 /* 弹道解算设置参数 */
 typedef struct {
     float k;                     //!< @brief 弹道系数
@@ -145,12 +155,12 @@ void Send_to_Vision(void);
 /**
 * @brief 坐标转换(N->B)
 */
-void Coordinate_Transformation (RotationMatrix_t R, const float* PoseN, float* PoseB);
-
+void Coordinate_Transformation (RotationMatrix_t R, const Pose_t* PoseN, Pose_t* PoseB);
+    
 /**
 * @brief 坐标点到原点的距离
 */
-float DistanceToOrigin(float X, float Y, float Z);
+float DistanceToOrigin(Pose_t pose);
 
 /**
 * @brief 空气阻力模型

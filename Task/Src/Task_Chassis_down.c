@@ -8,32 +8,24 @@ void Task_Chassis_down(void *pvParameters)
     static portTickType currentTime;
     for (;;)
     {
-        currentTime = xTaskGetTickCount(); // 获取当前时间
+        currentTime = xTaskGetTickCount();
 
-        if (systemState != SYSTEM_RUNNING)
-        {
+        if (systemState != SYSTEM_RUNNING){
             Chassis_Stop();
-        }
-        else
-        {
-            if (Remote_State == Device_Online)
-            {
+        } else {
+            if (Remote_State == Device_Online){
                 if (RemoteMode == REMOTE_INPUT)
                     Chassis_RC_Ctrl();
                 else if (RemoteMode == KEY_MOUSE_INPUT)
                     Chassis_Key_Ctrl();
                 else
                     Chassis_Stop();
-
                 if (RemoteMode != STOP)
-                {
                     Chassis_Drive();
-                }
 #if CHASSIS_RUN
                 CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
 #endif
-            }
-            else
+            }else
                 Chassis_Close();
         }
         vTaskDelayUntil(&currentTime, 1);
@@ -44,13 +36,12 @@ void Task_Chassis_down(void *pvParameters)
 void Chassis_RC_Ctrl()
 {
     /* 遥控器调试机器人 */
-    switch (RC_CtrlData.rc.s1)
-    {
+    switch (RC_CtrlData.rc.s1){
     case 1:
         ChassisAction = CHASSIS_NORMAL;
         AimAction = AIM_AUTO;
         if(ShootAction != SHOOT_STUCKING && AimAction != AIM_AUTO)
-            ShootAction = SHOOT_READY;
+            ShootAction = SHOOT_NORMAL;
     break;
 
     case 3:
@@ -97,8 +88,7 @@ void Chassis_Key_Ctrl()
         Key_ch[0] = 0;
 
     /* R键切换底盘模式 */
-    if (RC_CtrlData.key.R == 1 && Key_R == 0)
-    {
+    if (RC_CtrlData.key.R == 1 && Key_R == 0){
         if (ChassisAction == CHASSIS_FOLLOW)
             ChassisAction = CHASSIS_SPIN;
         else
@@ -108,35 +98,31 @@ void Chassis_Key_Ctrl()
     if (RC_CtrlData.key.R == 0)
         Key_R = 0;
     /* 快速转向后不松开V键将直接开始小陀螺，松开则停 */
-    if (RC_CtrlData.key.V == 1 && Key_V == 0)
-    {
+    if (RC_CtrlData.key.V == 1 && Key_V == 0){
         ChassisAction = CHASSIS_SPIN;
         Key_V = 1;
-    }
-    else if (RC_CtrlData.key.V == 0 && Key_V == 1)
-    {
-        ChassisAction = CHASSIS_FOLLOW;
-        Key_V = 0;
+    } else {
+        if (RC_CtrlData.key.V == 0 && Key_V == 1){
+            ChassisAction = CHASSIS_FOLLOW;
+            Key_V = 0;
+        }
     }
 }
 /* 底盘驱动 */
 void Chassis_Drive()
 {
-    if (CtrlMode == GYRO_MODE)
-    {
-        if (ChassisAction == CHASSIS_FOLLOW)
+    if (CtrlMode == GYRO_MODE){
+        if(ChassisAction == CHASSIS_FOLLOW)
             Chassis_Follow();
         else if (ChassisAction == CHASSIS_SPIN)
             Variable_Speed_Gyroscope();
         else
             Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;
-    }
-    else
-    {
+    } else {
         if(ChassisAction == CHASSIS_RADAR)
-            Communication_Speed_Tx.Chassis_Speed.rotate_ref =  - Radar_Chassis_Speed.rotate_ref * CHASSIS_Speed_R * 1.5;
+            Communication_Speed_Tx.Chassis_Speed.rotate_ref =  - Radar_Chassis_Speed.rotate_ref * STD_Omega;
         else
-            Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * CHASSIS_Speed_R * 3.5f;  //IMU离线只能控制底盘旋转转向
+            Communication_Speed_Tx.Chassis_Speed.rotate_ref = Key_ch[2] * STD_Omega;  //IMU离线只能控制底盘旋转转向
     }
     /* 底盘补偿 */
     Chassis_Offset();
@@ -145,22 +131,19 @@ void Chassis_Drive()
 void Chassis_Follow()
 {
     static uint16_t Follow_Speed_MAX = 8000;
+    static int16_t  Yaw_Mid = FRONT;
     /* 底盘跟随（直接判断Yaw轴机械角度判断最近归中位置） */
-    if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Left) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Right) )
-    {
-        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Front), &Chassis_Speed_PIDS, Gimbal_Motor[YAW].Speed);
-        PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out;
+    if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Left) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Right) ){
+        Yaw_Mid = Yaw_Mid_Front; 
         MidMode = FRONT;
-    }
-    else
-    {
-        PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid_Back), &Chassis_Speed_PIDS, Gimbal_Motor[YAW].Speed);
-        PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
-        Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out;
+    } else{
+        Yaw_Mid = Yaw_Mid_Back;
         MidMode = BACK;
     }
-        limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
+    PID_Control_Smis(Gimbal_Motor[YAW].MchanicalAngle, QuickCentering(Gimbal_Motor[YAW].MchanicalAngle, Yaw_Mid), &Chassis_Speed_PIDS, IMU.AngularVelocity.Z);
+    PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
+    Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out + FeedForward_Calc(&Chassis_FF);
+    limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
     #if !GIMBAL_RUN
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;  //云台只有在IMU的控制才能实现底盘跟随
     #endif
@@ -171,43 +154,34 @@ void Chassis_Offset()
 {
     static float Level_Gain, chassis_offset;
     static int16_t forward_back_ref = 0, left_right_ref = 0;
-
-    Level_Gain = 2.0f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
+    Level_Gain = 4.0f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
     chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;   // 底盘补偿角
 
-    if (RC_CtrlData.key.Shift)
-    {
-        left_right_ref   = Key_ch[0] * CHASSIS_Speed_H_Y * Level_Gain;
-        forward_back_ref = Key_ch[1] * CHASSIS_Speed_H_X * Level_Gain;
-    }
-    else
-    {
-        left_right_ref   = Key_ch[0] * CHASSIS_Speed_L_Y * Level_Gain;
-        forward_back_ref = Key_ch[1] * CHASSIS_Speed_L_X * Level_Gain;
+    if (RC_CtrlData.key.Shift){
+        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain * 2.0;
+        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain * 2.0;
+    } else{
+        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain;
+        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain;
     }
     
     /* 雷达导航模式 */
-    if(ChassisAction == CHASSIS_RADAR)
-    {
-        forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * CHASSIS_Speed_L_X * Level_Gain / 2.0f;
-        left_right_ref   =  - Radar_Chassis_Speed.left_right_ref   * CHASSIS_Speed_L_X * Level_Gain ;
-    }
-    else
-    {
+    if(ChassisAction == CHASSIS_RADAR){
+        forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * STD_Speed * Level_Gain ;
+        left_right_ref   =  - Radar_Chassis_Speed.left_right_ref   * STD_Speed * Level_Gain ;
+    } else {
         Radar_Chassis_Speed.forward_back_ref = 0;
         Radar_Chassis_Speed.left_right_ref   = 0;
         Radar_Chassis_Speed.rotate_ref       = 0;
     }
     
     /* Y轴在线才能解算补偿 */
-    if(Gimbal_State[YAW] == Device_Online)
-    {
-        /* 底盘补偿(小陀螺模式也能正常移动)*/
-        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =  forward_back_ref * cosf(  chassis_offset)  + left_right_ref * sinf(  chassis_offset);
-        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  forward_back_ref * sinf( -chassis_offset)  + left_right_ref * cosf( -chassis_offset);
-    }
-    else
-    {
+    if(Gimbal_State[YAW] == Device_Online){
+        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =   forward_back_ref * cosf(  chassis_offset)//底盘解算(小陀螺模式也能正常移动)
+                                                                + left_right_ref * sinf(  chassis_offset);
+        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  forward_back_ref * sinf( -chassis_offset) 
+                                                                + left_right_ref * cosf( -chassis_offset);
+    } else{
         Communication_Speed_Tx.Chassis_Speed.forward_back_ref =  forward_back_ref;
         Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  left_right_ref;
     }
@@ -254,16 +228,4 @@ void Variable_Speed_Gyroscope()
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = (3000 + Referee_data_Rx.robot_level * 250) * Variable_Speed_K;
     
     limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, - Follow_Speed_MAX);
-}
-
-/* 发送机构状态 */
-void Send_UI_State()
-{
-    Communication_Action_Tx.ChassisAction_Tx = ChassisAction;
-    Communication_Action_Tx.ShootAction_Tx = ShootAction;
-    Communication_Action_Tx.AimAction_Tx = AimAction;
-    Communication_Action_Tx.CtrlMode_Tx = CtrlMode;
-    Communication_Action_Tx.MidMode_Tx = MidMode;
-
-    CAN_Send_StdDataFrame(&hcan2, 0x120, (uint8_t *)&Communication_Action_Tx);
 }

@@ -1,7 +1,4 @@
 #include "Task_Protect.h"
-/* TODO: 硬件看门狗，防止硬件出错
-TODO:读取任务运行函数不能用
-*/
 
 #define LOOK_STACK 0
 #if LOOK_STACK
@@ -18,8 +15,7 @@ void Task_Protect(void *pvParameters)
 	{
 		currentTime = xTaskGetTickCount(); // 获取当前系统时间
 
-		if (Remote_State != Device_Online)
-		{
+		if (Remote_State != Device_Online){
 			osThreadSuspend(Task_Chassis_down_handle); // 将任务挂起
 			osThreadSuspend(Task_Shoot_handle);
 			osThreadSuspend(Task_Gimbal_handle);
@@ -29,23 +25,27 @@ void Task_Protect(void *pvParameters)
 			Chassis_Close();			   // 底盘电机关闭
 			Gimbal_Close();				   // 云台电机关闭
 			Shoot_Close();				   // 发射机构电机关闭
-		}
-		else
-		{
+		} else{
 			/* 恢复任务 */
 			osThreadResume(Task_Chassis_down_handle);
 			osThreadResume(Task_Shoot_handle);
 			osThreadResume(Task_Gimbal_handle);
 		}
 
-		/* 看门狗轮询 */
+		/* 软件看门狗轮询 */
 		WatchDog_Polling();
         
+        /* 硬件看门狗 */
+        HAL_IWDG_Refresh(&hiwdg);
+        
+        /* 给下板发送状态 */
+        Send_UI_State();
+
 #if LOOK_STACK
         //获得任务名 任务状态 优先级 剩余栈 任务序号
         memset(taskListBuffer, 0, 30*6);
         vTaskList((char *)&taskListBuffer); 
-        //获取剩余Stack大小
+        //获取剩余Stack大小,堆栈不够会进入硬件错误
         uxHighWaterMark[0] = uxTaskGetStackHighWaterMark( Task_Chassis_down_handle );
         uxHighWaterMark[1] = uxTaskGetStackHighWaterMark( Task_Gimbal_handle );
         uxHighWaterMark[2] = uxTaskGetStackHighWaterMark( Task_Shoot_handle );
@@ -58,4 +58,16 @@ void Task_Protect(void *pvParameters)
 #endif
 		vTaskDelayUntil(&currentTime, 10);
 	}
+}
+
+/* 发送机构状态 */
+void Send_UI_State()
+{
+    Communication_Action_Tx.ChassisAction_Tx = ChassisAction;
+    Communication_Action_Tx.ShootAction_Tx = ShootAction;
+    Communication_Action_Tx.AimAction_Tx = AimAction;
+    Communication_Action_Tx.CtrlMode_Tx = CtrlMode;
+    Communication_Action_Tx.MidMode_Tx = MidMode;
+
+    CAN_Send_StdDataFrame(&hcan2, 0x120, (uint8_t *)&Communication_Action_Tx);
 }

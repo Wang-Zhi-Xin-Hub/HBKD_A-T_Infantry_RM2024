@@ -10,5 +10,6 @@
 #include "Variate.h"
 #include "Function.h"
 
+void Send_UI_State(); //!< @brief 给下板发送状态
 
 #endif

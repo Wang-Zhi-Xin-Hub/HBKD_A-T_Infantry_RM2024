@@ -53,25 +53,23 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 /* 虚拟串口PC通信接收回调函数 */
 void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
 {
-    static uint64_t Last_Time;
-    if (id == 0 && fun_code == 0 )
-    {
-        /* 时间戳同步 */
-        memcpy(&Aim_Rx.StandardTimeStamp, data, sizeof(Aim_Rx.StandardTimeStamp));
-        Aim_Rx.TimeStamp_setoff = Aim_Rx.StandardTimeStamp - xTaskGetTickCount();
-        Aim_Rx.Rx_Flag            = 0;
+    static int64_t time = 0;
+    if(id == 0 && fun_code == 0 ){
+        uint64_t StandardTimeStamp;
+        memcpy(&StandardTimeStamp, data, sizeof(StandardTimeStamp));      // 时间戳同步
+        Aim_Rx.TimeStamp_setoff = StandardTimeStamp - xTaskGetTickCount();
+        Aim_Rx.Rx_flag            = 0;
     }
     
-    if ( id == 0 && fun_code == 1 )
-    {
-        /* 转存数据 */
-        memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));
-        Aim_Rx.Rx_Flag = 1;
+    if ( id == 0 && fun_code == 1 ){
+        memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));        //自瞄数据
+        Aim_Rx.Rx_flag            = 1;
+        Aim_Tx.Time_Gap = xTaskGetTickCount() - time;
+        time = xTaskGetTickCount();
     }
     
-    if (id == 1 && fun_code == 1 )
-    {
-        memcpy(&Radar_Chassis_Speed, data, sizeof(Radar_Chassis_Speed));
+    if (id == 1 && fun_code == 1 ){   
+        memcpy(&Radar_Chassis_Speed, data, sizeof(Radar_Chassis_Speed));    //雷达数据
     }
       Feed_Dog(&PC_Dog);
 }

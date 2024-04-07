@@ -8,6 +8,7 @@
 #include "task.h"
 #include "cmsis_os2.h"
 #include "usart.h"
+#include "iwdg.h"
 #include "motor.h"
 #include "PID.h"
 #include "remote.h"
@@ -36,7 +37,7 @@
 #define P_ADD_limit 550	     //!< @brief Pitch轴电机上限位与水平位差值
 #define P_LOSE_limit 400     //!< @brief Pitch轴电机下限位与水平位差值
 #define SHOOT_SPEED  7000    //!< @brief 摩擦轮电机速度环PID的期望值
-#define PLUCK_SPEED 1300     //!< @brief 拨弹盘电机连发时速度环PID的期望值
+#define PLUCK_SPEED 1500     //!< @brief 拨弹盘电机连发时速度环PID的期望值
 #define PLUCK_MOTOR_ONE 1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
 
 #elif ROBOT_ID == 4
@@ -57,7 +58,7 @@
 /** @brief    是否启动发射机构电机驱动 */
 #define SHOOT_RUN   1
 
-/* 根据机器人正前方Yaw轴机械角度算出机器人剩下三个方向Yaw轴机械角度 */
+/* 根据机器人正前方Yaw轴机械角度算出机器人剩下三个方向Yaw轴机械角度（6020正装，反装将左右相反） */
 #if (Yaw_Mid_Front + 2048) > 8191
 #define Yaw_Mid_Left Yaw_Mid_Front - 6143
 #else
@@ -81,14 +82,6 @@
 /** @brief 串口2陀螺仪数据长度（由陀螺仪开启功能决定） */
 #define IMU_Usart2_Len      IMU_LEN + 1
 
-/** @brief 电机数据代号 */
-#define LEFT   0
-#define RIGHT  1
-
-/** @brief 模式代号 */
-#define Change_RC  0
-#define Change_KEY 1
-
 /** @brief 重力 */
 #define GRAVITY 9.78f
 
@@ -97,17 +90,6 @@
 #define STD_Omega 6142    // 标准速度1rpm/s
 #define STD_Angle 0.36f	  // 角度制1rpm/s
 #define STD_MAngle 8.192  // 机械角度制1rpm/s
-
-/* 前后速度 */
-#define CHASSIS_Speed_H_X (STD_Speed * 2.5f) // 高速2.5m/s
-#define CHASSIS_Speed_L_X (STD_Speed * 1.5f) // 平时速度1.5m/s
-
-/* 平移速度 */
-#define CHASSIS_Speed_H_Y (STD_Speed * 2.5f) // 高速2.5m/s
-#define CHASSIS_Speed_L_Y (STD_Speed * 1.5f) // 平时速度1.5m/s
-
-/* 旋转速度 */
-#define CHASSIS_Speed_R (STD_Omega / 4) // 转向速度 0.25rpm/s
 
 /* 云台电机代号 */
 enum
@@ -122,14 +104,20 @@ enum
     Init = 0,
     Mech = 1,
     Gyro = 2,
-    MODE_SUM = 3,
+    GIMBAL_MODE = 3,
 };
 
-/* 坐标系枚举 */
-enum{
-    X = 0,
-    Y = 1,
-    Z = 2
+enum
+{
+    Change_RC =0,
+    Change_KEY=1,
+    RC_Mode = 2,
+};
+enum
+{
+    LEFT = 0,
+    RIGHT= 1,
+    FRIC_SUM = 2,
 };
 
 /*设备状态 */
@@ -182,7 +170,7 @@ typedef enum
 	SHOOT_READY = 1,        //!< @brief  准备发射（摩擦轮启动）
 	SHOOT_NORMAL = 2,       //!< @brief  单发(拨弹盘转动一个弹丸位置)
 	SHOOT_RUNNING = 3,      //!< @brief  速射
-    SHOOT_STUCKING = 4,     //!< @BRIEF  卡弹退弹中
+    SHOOT_STUCKING = 4,     //!< @brief  卡弹退弹中
 } eShootAction;
 extern eShootAction ShootAction;
 
@@ -192,7 +180,7 @@ typedef enum
 	CHASSIS_FOLLOW = 0, //!< @brief   底盘跟随模式
 	CHASSIS_SPIN = 1,	//!< @brief   小陀螺模式
 	CHASSIS_NORMAL = 2,	//!< @brief   普通底盘（调试用）
-    CHASSIS_RADAR = 3   //!< @brief   雷达导航模式
+    CHASSIS_RADAR = 3,   //!< @brief   雷达导航模式
 } eChassisAction;
 extern eChassisAction ChassisAction;
 
@@ -209,7 +197,7 @@ extern Referee_data_t Referee_data_Rx;
 typedef struct
 {
 	ChassisSpeed_Ref_t Chassis_Speed; //!< @brief 底盘期望速度
-	uint8_t Close_flag;				  //!< @brief Shift加速（也可作为其他状态标志位）
+	uint8_t Close_flag;				  //!< @brief 底盘关闭标志位
 } Communication_Speed_t;
 extern Communication_Speed_t Communication_Speed_Tx;
 
@@ -235,34 +223,29 @@ extern Radar_Chassis_Speed_Ref_t Radar_Chassis_Speed;
 
 /** @brief 声明外部变量，引入其他任务头文件中 */
 /* 遥控器 */
-extern float Key_ch[4];
-extern float Mouse_ch[3];
+extern float Key_ch[4], Mouse_ch[3];
 extern InputMode_e RemoteMode;
 /* 电机 */
-extern GM6020_TypeDef Gimbal_Motor[2];
-extern RM3508_TypeDef Shoot_Motor[2];
+extern GM6020_TypeDef Gimbal_Motor[GIMBAL_SUM];
+extern RM3508_TypeDef Shoot_Motor[FRIC_SUM];
 extern M2006_TypeDef  Pluck_Motor;
 /* PID */
-extern PID Gimbal_Speed_PID[GIMBAL_SUM][MODE_SUM], Shoot_Speed_PID[2], Pluck_Speed_PID, Pluck_Continue_PID, Chassis_Speed_PID;
-extern PID_Smis Gimbal_Place_PIDS[GIMBAL_SUM][MODE_SUM], Pluck_Place_PIDS, Chassis_Speed_PIDS;
+extern PID Gimbal_Speed_PID[GIMBAL_SUM][GIMBAL_MODE], Shoot_Speed_PID[FRIC_SUM], Pluck_Speed_PID, Pluck_Continue_PID, Chassis_Speed_PID;
+extern PID_Smis Gimbal_Place_PIDS[GIMBAL_SUM][GIMBAL_MODE], Pluck_Place_PIDS, Chassis_Speed_PIDS;
+extern FeedForward_Typedef Chassis_FF;
 /* 云台期望 */
 extern PTZAngle_Ref_t Gyro_Ref, Mech_Ref, Aim_Ref, Gimbal_Ramp_Angle;
-extern float Gimbal_increase[GIMBAL_SUM][2];
+extern float Gimbal_increase[GIMBAL_SUM][RC_Mode];
 /* 串口 */
 extern uint8_t Remote_flag,IMU_flag;
 extern uint8_t Usart1_Remote_Dma[2][Remote_Usart1_Len], Usart2_IMU_Dma[2][IMU_Usart2_Len];
 /* Can */
 extern int16_t Can1Send_Shoot[4], Can2Send_Gimbal[4];
 /* 看门狗 */
-extern WatchDog_TypeDef Remote_Dog, IMU_Dog, Gimbal_Dog[GIMBAL_SUM], Shoot_Dog[2], Pluck_Dog, Down_Dog, PC_Dog;
+extern WatchDog_TypeDef Remote_Dog, IMU_Dog, Gimbal_Dog[GIMBAL_SUM], Shoot_Dog[FRIC_SUM], Pluck_Dog, Down_Dog, PC_Dog;
 /* 视觉 */
 extern USBD_HandleTypeDef hUsbDeviceFS;
 /* 任务句柄 */
-extern TaskHandle_t  Task_Chassis_down_handle;
-extern TaskHandle_t  Task_Gimbal_handle;
-extern TaskHandle_t  Task_Shoot_handle;
-extern TaskHandle_t  Task_Protect_handle;
-extern TaskHandle_t  Task_IMU_handle;
-extern TaskHandle_t  Task_Remote_handle;
+extern TaskHandle_t  Task_Chassis_down_handle, Task_Gimbal_handle, Task_Shoot_handle, Task_Protect_handle, Task_IMU_handle, Task_Remote_handle;
 
 #endif

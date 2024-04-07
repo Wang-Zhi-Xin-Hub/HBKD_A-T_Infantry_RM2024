@@ -44,14 +44,13 @@ void Task_Init()
     
     /* 创建任务 */
     xTaskCreate((TaskFunction_t)Task_Chassis_down, "Task_Chassis_down", 128, NULL, 3, &Task_Chassis_down_handle);
-    xTaskCreate((TaskFunction_t)Task_Gimbal,       "Task_Gimbal",       128, NULL, 4, &Task_Gimbal_handle);
+    xTaskCreate((TaskFunction_t)Task_Gimbal,       "Task_Gimbal",       256, NULL, 4, &Task_Gimbal_handle);
     xTaskCreate((TaskFunction_t)Task_Shoot,        "Task_Shoot",        128, NULL, 5, &Task_Shoot_handle);
     xTaskCreate((TaskFunction_t)Task_IMU_Rx,       "IMU_Rx",            128, NULL, 6, &Task_IMU_handle);
     xTaskCreate((TaskFunction_t)Task_Remote_Rx,    "Remote_Rx",         128, NULL, 6, &Task_Remote_handle);
-    xTaskCreate((TaskFunction_t)Task_Protect,      "Task_Protect",      64,  NULL, 7, &Task_Protect_handle);
+    xTaskCreate((TaskFunction_t)Task_Protect,      "Task_Protect",      128, NULL, 7, &Task_Protect_handle);
     
     taskEXIT_CRITICAL(); // 退出临界区
     
     vTaskDelete(NULL);   // 删除开始空闲任务
-
 }

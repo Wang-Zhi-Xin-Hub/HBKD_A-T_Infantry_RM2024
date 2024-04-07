@@ -10,6 +10,5 @@ void Chassis_Drive();             //!< @brief 底盘移动
 void Chassis_Follow();           //!< @brief 底盘跟随
 void Chassis_Offset();           //!< @brief 底盘补偿计算
 void Variable_Speed_Gyroscope(); //!< @brief 变速小陀螺
-void Send_UI_State();            //!< @brief 发送状态
 
 #endif

@@ -71,6 +71,7 @@ void Chassis_Stop()
     Communication_Speed_Tx.Chassis_Speed.forward_back_ref = 0;	
     Communication_Speed_Tx.Chassis_Speed.left_right_ref  = 0;
     Communication_Speed_Tx.Close_flag = 0;
+    
 }
 
 void Gimbal_Stop()
@@ -106,7 +107,7 @@ void Chassis_Close()
     Communication_Speed_Tx.Chassis_Speed.rotate_ref       = 0;
     Communication_Speed_Tx.Chassis_Speed.forward_back_ref = 0;		
     Communication_Speed_Tx.Chassis_Speed.left_right_ref   = 0;
-    Communication_Speed_Tx.Close_flag = 2; //将Shift标志位用于底盘关闭标志位
+    Communication_Speed_Tx.Close_flag = 1; //将Shift标志位用于底盘关闭标志位
     CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
 }
 

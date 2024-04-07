@@ -65,7 +65,6 @@ typedef struct
         uint8_t SS;               //!< @brief 秒
 		uint8_t MS;               //!< @brief 毫秒
         int64_t TimeStamp;        //!< @brief 时间戳
-        
 	} Time; //!< @brief 时间
 #endif
 
@@ -96,7 +95,6 @@ typedef struct
 		int16_t r;
 		float LsatAngle;
 		float ContinuousYaw;
-		float Yawoffset;
 	} EulerAngler; //!< @brief 欧拉角
 #endif
 
@@ -124,7 +122,7 @@ typedef struct
 		float Y;
 		float Z;
 	} Quaternions; //!< @brief 四元数
-RotationMatrix_t  RotationMatrix;
+RotationMatrix_t  RotationMatrix;   //转换矩阵
 #endif
 
 } IMU_Typedef;
