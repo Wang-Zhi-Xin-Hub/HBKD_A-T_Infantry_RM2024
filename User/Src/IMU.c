@@ -37,7 +37,7 @@ void IMU_Receive(IMU_Typedef *Dst, const uint8_t *Data)
 				Dst->Quaternions.X = ((int16_t)(Data[i + 4] << 8) | Data[i + 3]) / 32768.0f;
 				Dst->Quaternions.Y = ((int16_t)(Data[i + 6] << 8) | Data[i + 5]) / 32768.0f;
 				Dst->Quaternions.Z = ((int16_t)(Data[i + 8] << 8) | Data[i + 7]) / 32768.0f;
-                Dst->RotationMatrix = QuaternionToRotationMatrix(&IMU);
+//                Dst->RotationMatrix = QuaternionToRotationMatrix(&IMU);
 				break;
 #endif
 

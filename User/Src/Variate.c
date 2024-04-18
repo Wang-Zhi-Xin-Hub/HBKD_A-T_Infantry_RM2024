@@ -5,36 +5,41 @@
 #include "Variate.h"
 
 /* PID结构体定义(在此修改PID值) */
-
 #if ROBOT_ID == 3
+
     /* 云台 */
 PID Gimbal_Speed_PID[GIMBAL_SUM][GIMBAL_MODE] = {{{.Kp = 3.3f, .Ki = 0, .Kd = 1.5f, .limit = 5000},      //Pitch轴6020电机 0           初始归中 0
                                             {.Kp = 12, .Ki = 0, .Kd = 2.5, .limit = 5000},             //  速度环                    机械 1
-                                            {.Kp = 30, .Ki = 0, .Kd = 0, .limit = 5000}},             //                            陀螺仪 2
+                                            {.Kp = 35, .Ki = 0, .Kd = 0, .limit = 5000},             //                            陀螺仪 2  陀螺仪追求稳
+                                            {.Kp = 35, .Ki = 0, .Kd = 0, .limit = 5000}},             //                            AIM 2   AIM追求快
 
-                                            {{.Kp = 4.5, .Ki = 0, .Kd = 3, .limit = 5000 },            //Yaw轴6020电机 1         初始归中 0
+                                            {{.Kp = 4.5f, .Ki = 0, .Kd = 3, .limit = 5000 },            //Yaw轴6020电机 1         初始归中 0
                                             {.Kp = 4.5f, .Ki = 0, .Kd = 3, .limit = 5000},             //                        机械 1
-                                            {.Kp = 30, .Ki = 0, .Kd = 0, .limit = 5000}}};             //                        陀螺仪 2
-
+                                            {.Kp = 40, .Ki = 0, .Kd = 0, .limit = 5000},              //                        陀螺仪 2
+                                            {.Kp = 40, .Ki = 0, .Kd = 0, .limit = 5000}}};             //                        AIM 2
+                                            
 PID_Smis Gimbal_Place_PIDS[GIMBAL_SUM][GIMBAL_MODE] = {{{.Kp = 7, .Ki = 0, .Kd = -2.5, .limit = 5000},         //Pitch轴6020电机 0      初始 0
                                                 {.Kp = 25, .Ki = 0.1, .Kd = -30, .limit = 5000},              //    位置环             机械 1
-                                                {.Kp = 75, .Ki = 0.10, .Kd = -6, .limit = 6000,.error_thre =0 ,.DeadBand = 0.00}},         //    陀螺仪 2
-
-                                                {{.Kp = 5, .Ki = 0, .Kd = -18, .limit = 5000},           //Yaw轴6020电机 1       初始 0
+                                                {.Kp = 85, .Ki = 0.30, .Kd = -5, .limit = 6000,.error_thre = 0 ,.DeadBand = 0.00},         //    陀螺仪 2
+                                                {.Kp = 85, .Ki = 0.30, .Kd = -5, .limit = 6000,.error_thre = 30 ,.DeadBand = 0.00}},         //    AIM 2
+                                                
+                                                {{.Kp = 5, .Ki = 0, .Kd = -8, .limit = 5000},           //Yaw轴6020电机 1       初始 0
                                                 {.Kp = 15, .Ki = 0, .Kd = -3, .limit = 5000},              //                      机械 1
-                                                {.Kp = 85, .Ki = 0, .Kd = -6.5, .limit = 5000}}};          //                      陀螺仪 2
+                                                {.Kp = 125, .Ki = 0, .Kd = - 5, .limit = 5000, .error_thre = 360},          // 陀螺仪 2
+                                                {.Kp = 125, .Ki = 1, .Kd = -5, .limit = 5000, .error_thre = 360}}};          // AIM 2
+                                                
     /* 发射机构 */
 PID Shoot_Speed_PID[FRIC_SUM] = {{.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000},            //摩擦轮左
                           {.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000}};           //摩擦轮右
 
-PID_Smis Pluck_Place_PIDS = {.Kp = 3, .Ki = 0, .Kd = -1, .limit = 5000};         //拨弹盘单发位置环
-PID Pluck_Speed_PID = {.Kp = 4, .Ki = 0, .Kd = 3, .limit = 5000};                //拨弹盘单发速度环
+PID_Smis Pluck_Place_PIDS = {.Kp = 5, .Ki = 0, .Kd = - 0.8, .limit = 5000};         //拨弹盘单发位置环
+PID Pluck_Speed_PID = {.Kp = 4, .Ki = 0, .Kd = 0, .limit = 5000};                //拨弹盘单发速度环
 PID Pluck_Continue_PID = {.Kp = 15, .Ki = 0, .Kd = 0, .limit = 5000};            //拨弹盘连发模式
 
    /* 底盘跟随 */
-PID_Smis Chassis_Speed_PIDS = {.Kp = 5, .Ki = 0, .Kd = 0, .limit = 5000};     //底盘跟随   位置环
-PID Chassis_Speed_PID = {.Kp =2, .Ki = 0, .Kd = 1, .limit = 5000};            //           速度环
-FeedForward_Typedef Chassis_FF = {.K1 = 2000, .OutMax = RM3508_LIMIT};
+PID_Smis Chassis_Speed_PIDS = {.Kp = 4, .Ki = 0, .Kd = 0, .limit = 5000};     //底盘跟随   位置环
+PID Chassis_Speed_PID = {.Kp =2, .Ki = 0, .Kd = 0, .limit = 5000};            //           速度环
+FeedForward_Typedef Chassis_FF = {.K1 = 2000, .OutMax = RM3508_LIMIT};         //前馈
 
 #elif ROBOT_ID == 4
 

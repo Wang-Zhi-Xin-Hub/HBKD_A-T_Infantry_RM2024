@@ -1,6 +1,6 @@
 #include "remote.h"
 
-RC_Ctl_t RC_CtrlData = {.rc = {1024, 1024, 1024, 1024, 2, 1}};     //!<@brief remote control data
+RC_Ctl_t RC_CtrlData = {.rc = {1024, 1024, 1024, 1024, 2, 2}};     //!<@brief remote control data
 
 __weak void RemoteControlProcess(Remote *rc) {
     UNUSED(rc);
@@ -20,8 +20,8 @@ void RemoteClear() {
     RC_CtrlData.rc.ch1 = 1024;
     RC_CtrlData.rc.ch2 = 1024;
     RC_CtrlData.rc.ch3 = 1024;
-    RC_CtrlData.rc.s1 = 1;
-    RC_CtrlData.rc.s2 = 1;
+    RC_CtrlData.rc.s1 = 2;
+    RC_CtrlData.rc.s2 = 2;
     RC_CtrlData.key.S = 0;
     RC_CtrlData.Lastkey.S = 0;
     RC_CtrlData.mouse.x = 0;

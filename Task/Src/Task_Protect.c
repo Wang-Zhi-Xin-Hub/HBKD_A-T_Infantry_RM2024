@@ -31,15 +31,9 @@ void Task_Protect(void *pvParameters)
 			osThreadResume(Task_Shoot_handle);
 			osThreadResume(Task_Gimbal_handle);
 		}
-
-		/* 软件看门狗轮询 */
-		WatchDog_Polling();
-        
-        /* 硬件看门狗 */
-        HAL_IWDG_Refresh(&hiwdg);
-        
-        /* 给下板发送状态 */
-        Send_UI_State();
+		WatchDog_Polling(); ///软件看门狗轮询
+        HAL_IWDG_Refresh(&hiwdg);//硬件看门狗
+        Send_UI_State();    //给下板发送状态
 
 #if LOOK_STACK
         //获得任务名 任务状态 优先级 剩余栈 任务序号

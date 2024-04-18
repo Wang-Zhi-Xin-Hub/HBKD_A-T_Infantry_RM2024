@@ -222,13 +222,10 @@ void USART1_IRQHandler(void)
         HAL_UART_DMAStop(&huart1);
 
         Feed_Dog(&Remote_Dog);
-        if (!Remote_flag)
-        {
+        if (!Remote_flag){
             Remote_flag = 1;
             HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[1], Remote_Usart1_Len);
-        }
-        else
-        {
+        } else {
             Remote_flag = 0;
             HAL_UART_Receive_DMA(&huart1, Usart1_Remote_Dma[0], Remote_Usart1_Len);
         }
@@ -255,19 +252,20 @@ void USART2_IRQHandler(void)
         
         HAL_UART_DMAStop(&huart2);
         
-        if (!IMU_flag)
-        {
+        if (!IMU_flag){
             IMU_flag = 1;
             HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[1], IMU_Usart2_Len);
-        }
-        else
-        {
+        } else {
             IMU_flag = 0;
             HAL_UART_Receive_DMA(&huart2, Usart2_IMU_Dma[0], IMU_Usart2_Len);
         }
         Feed_Dog(&IMU_Dog);
         osThreadFlagsSet(Task_IMU_handle, 0x01); 
-        
+    //防止串口热插拔导致ORE错误卡死在中断里（小概率会）
+  if((READ_REG(huart2.Instance->SR) & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE))){
+	  (void)huart2.Instance->SR;
+	  (void)huart2.Instance->DR;
+  }
   }
 #if 0
   /* USER CODE END USART2_IRQn 0 */

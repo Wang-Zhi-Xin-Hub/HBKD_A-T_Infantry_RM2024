@@ -105,8 +105,10 @@ void PID_Control_Smis(float current, float expected, PID_Smis *data, float speed
  * @return PID增量
  */
 float PID_Increment(float current, float expect, PID_ADD *parameter);
-/*  */
+/* 前馈 */
 float FeedForward_Calc(FeedForward_Typedef *FF);
+
+
 
 #ifdef __cplusplus
 }

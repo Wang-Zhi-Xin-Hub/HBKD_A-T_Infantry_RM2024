@@ -1,7 +1,8 @@
 #include "Task_Chassis_down.h"
-/* 
-    TODO：底盘跟随看效果类似前馈算法(如果PID也可以就算了)
-*/
+
+/* TODO:shift优化 */
+/* 转弯时，前进过快会弧度变大 */
+
 /* 底盘控制（下板通信）主任务 */
 void Task_Chassis_down(void *pvParameters)
 {
@@ -10,22 +11,18 @@ void Task_Chassis_down(void *pvParameters)
     {
         currentTime = xTaskGetTickCount();
 
-        if (systemState != SYSTEM_RUNNING){
+        if (systemState != SYSTEM_RUNNING)
             Chassis_Stop();
-        } else {
+        else {
             if (Remote_State == Device_Online){
-                if (RemoteMode == REMOTE_INPUT)
-                    Chassis_RC_Ctrl();
-                else if (RemoteMode == KEY_MOUSE_INPUT)
-                    Chassis_Key_Ctrl();
-                else
-                    Chassis_Stop();
+                RemoteMode == REMOTE_INPUT ? Chassis_RC_Ctrl() : 
+                    RemoteMode == KEY_MOUSE_INPUT ? Chassis_Key_Ctrl() : Chassis_Stop();
                 if (RemoteMode != STOP)
                     Chassis_Drive();
 #if CHASSIS_RUN
                 CAN_Send_StdDataFrame(&hcan2, 0x110, (uint8_t *)&Communication_Speed_Tx);
 #endif
-            }else
+            } else
                 Chassis_Close();
         }
         vTaskDelayUntil(&currentTime, 1);
@@ -99,7 +96,7 @@ void Chassis_Key_Ctrl()
         Key_R = 0;
     /* 快速转向后不松开V键将直接开始小陀螺，松开则停 */
     if (RC_CtrlData.key.V == 1 && Key_V == 0){
-        ChassisAction = CHASSIS_SPIN;
+        ChassisAction = CHASSIS_NORMAL;
         Key_V = 1;
     } else {
         if (RC_CtrlData.key.V == 0 && Key_V == 1){
@@ -136,7 +133,7 @@ void Chassis_Follow()
     if ( (Gimbal_Motor[YAW].MchanicalAngle <= Yaw_Mid_Left) || (Gimbal_Motor[YAW].MchanicalAngle >= Yaw_Mid_Right) ){
         Yaw_Mid = Yaw_Mid_Front; 
         MidMode = FRONT;
-    } else{
+    } else {
         Yaw_Mid = Yaw_Mid_Back;
         MidMode = BACK;
     }
@@ -144,47 +141,10 @@ void Chassis_Follow()
     PID_Control(Gimbal_Motor[YAW].Speed, Chassis_Speed_PIDS.pid_out, &Chassis_Speed_PID);
     Communication_Speed_Tx.Chassis_Speed.rotate_ref = Chassis_Speed_PID.pid_out + FeedForward_Calc(&Chassis_FF);
     limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, -Follow_Speed_MAX);
-    #if !GIMBAL_RUN
+        
+#if !GIMBAL_RUN
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = 0;  //云台只有在IMU的控制才能实现底盘跟随
-    #endif
-}
-
-/* 底盘补偿计算 */
-void Chassis_Offset()
-{
-    static float Level_Gain, chassis_offset;
-    static int16_t forward_back_ref = 0, left_right_ref = 0;
-    Level_Gain = 4.0f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
-    chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;   // 底盘补偿角
-
-    if (RC_CtrlData.key.Shift){
-        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain * 2.0;
-        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain * 2.0;
-    } else{
-        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain;
-        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain;
-    }
-    
-    /* 雷达导航模式 */
-    if(ChassisAction == CHASSIS_RADAR){
-        forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * STD_Speed * Level_Gain ;
-        left_right_ref   =  - Radar_Chassis_Speed.left_right_ref   * STD_Speed * Level_Gain ;
-    } else {
-        Radar_Chassis_Speed.forward_back_ref = 0;
-        Radar_Chassis_Speed.left_right_ref   = 0;
-        Radar_Chassis_Speed.rotate_ref       = 0;
-    }
-    
-    /* Y轴在线才能解算补偿 */
-    if(Gimbal_State[YAW] == Device_Online){
-        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =   forward_back_ref * cosf(  chassis_offset)//底盘解算(小陀螺模式也能正常移动)
-                                                                + left_right_ref * sinf(  chassis_offset);
-        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  forward_back_ref * sinf( -chassis_offset) 
-                                                                + left_right_ref * cosf( -chassis_offset);
-    } else{
-        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =  forward_back_ref;
-        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  left_right_ref;
-    }
+#endif
 }
 
 /* 变速小陀螺 */
@@ -219,7 +179,7 @@ void Variable_Speed_Gyroscope()
         angle = ABS(705.0f + 8191.0f - Gimbal_Motor[YAW].MchanicalAngle) / 2050.57f;
     
     /* 最终变速比例 */
-    Variable_Speed_K = 1.0f;
+    Variable_Speed_K = 1.5f;
 
     /* 小陀螺有等级增益，有移动速度时减小 */
     if (Key_ch[0] || Key_ch[1])
@@ -228,4 +188,45 @@ void Variable_Speed_Gyroscope()
         Communication_Speed_Tx.Chassis_Speed.rotate_ref = (3000 + Referee_data_Rx.robot_level * 250) * Variable_Speed_K;
     
     limit(Communication_Speed_Tx.Chassis_Speed.rotate_ref, Follow_Speed_MAX, - Follow_Speed_MAX);
+}
+
+/* 底盘补偿计算 */
+void Chassis_Offset()
+{
+    static float Level_Gain, chassis_offset;
+    static int16_t forward_back_ref = 0, left_right_ref = 0;
+    Level_Gain = 2.5f + Referee_data_Rx.robot_level * 0.2;                            // 等级增益
+    chassis_offset = (Gimbal_Motor[YAW].MchanicalAngle - Yaw_Mid_Front) / 1303.80f;   // 底盘补偿角
+
+    if (ChassisAction == CHASSIS_FOLLOW && Communication_Speed_Tx.Chassis_Speed.rotate_ref >= 1500){
+        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain * ( 1 - Communication_Speed_Tx.Chassis_Speed.rotate_ref / 10000.0f);
+        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain * ( 1 - Communication_Speed_Tx.Chassis_Speed.rotate_ref / 10000.0f);
+    } else if (RC_CtrlData.key.Shift){
+        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain * 1.5f;
+        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain * 1.5f;
+    } else {
+        left_right_ref   = Key_ch[0] * STD_Speed * Level_Gain;
+        forward_back_ref = Key_ch[1] * STD_Speed * Level_Gain;
+    }
+
+    /* 雷达导航模式 */
+    if(ChassisAction == CHASSIS_RADAR){
+        forward_back_ref =    Radar_Chassis_Speed.forward_back_ref * STD_Speed * Level_Gain ;
+        left_right_ref   =  - Radar_Chassis_Speed.left_right_ref   * STD_Speed * Level_Gain ;
+    } else {
+        Radar_Chassis_Speed.forward_back_ref = 0;
+        Radar_Chassis_Speed.left_right_ref   = 0;
+        Radar_Chassis_Speed.rotate_ref       = 0;
+    }
+    
+    /* Y轴在线才能解算补偿 */
+    if(Gimbal_State[YAW] == Device_Online){
+        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =   forward_back_ref * cosf(  chassis_offset)//底盘解算(小陀螺模式也能正常移动)
+                                                                + left_right_ref * sinf(  chassis_offset);
+        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  forward_back_ref * sinf( -chassis_offset) 
+                                                                + left_right_ref * cosf( -chassis_offset);
+    } else{
+        Communication_Speed_Tx.Chassis_Speed.forward_back_ref =  forward_back_ref;
+        Communication_Speed_Tx.Chassis_Speed.left_right_ref   =  left_right_ref;
+    }
 }

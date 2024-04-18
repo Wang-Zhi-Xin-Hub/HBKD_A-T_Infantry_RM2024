@@ -49,7 +49,9 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
   }
 }
-
+int flag = 0;
+int SUM = 0;
+int argv = 0;
 /* 虚拟串口PC通信接收回调函数 */
 void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
 {
@@ -64,13 +66,20 @@ void VCOMM_CallBack(uint8_t fun_code, uint16_t id, uint8_t *data, uint8_t len)
     if ( id == 0 && fun_code == 1 ){
         memcpy(&Aim_Rx_infopack, data, sizeof(Aim_Rx_info));        //自瞄数据
         Aim_Rx.Rx_flag            = 1;
+        if(flag++ < 100)
+            SUM += Aim_Rx_infopack.delay;
+        else {
+            argv = SUM / 100.0f;
+            SUM = 0;
+            flag = 0;
+        }
         Aim_Tx.Time_Gap = xTaskGetTickCount() - time;
         time = xTaskGetTickCount();
     }
     
-    if (id == 1 && fun_code == 1 ){   
+    if (id == 1 && fun_code == 1 )  
         memcpy(&Radar_Chassis_Speed, data, sizeof(Radar_Chassis_Speed));    //雷达数据
-    }
+    
       Feed_Dog(&PC_Dog);
 }
 

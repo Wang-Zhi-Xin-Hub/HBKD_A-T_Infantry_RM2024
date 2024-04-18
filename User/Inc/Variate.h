@@ -32,13 +32,13 @@
 
 /** @brief 不同ROBOT_ID不同参数 */
 #if ROBOT_ID == 3
-#define Yaw_Mid_Front 7880   //!< @brief Yaw轴电机机器人前方中值
+#define Yaw_Mid_Front 720   //!< @brief Yaw轴电机机器人前方中值
 #define Pitch_Mid 675        //!< @brief Pitch轴电机云台水平值
 #define P_ADD_limit 550	     //!< @brief Pitch轴电机上限位与水平位差值
 #define P_LOSE_limit 400     //!< @brief Pitch轴电机下限位与水平位差值
 #define SHOOT_SPEED  7000    //!< @brief 摩擦轮电机速度环PID的期望值
-#define PLUCK_SPEED 1500     //!< @brief 拨弹盘电机连发时速度环PID的期望值
-#define PLUCK_MOTOR_ONE 1340 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
+#define PLUCK_SPEED 2000     //!< @brief 拨弹盘电机连发时速度环PID的期望值
+#define PLUCK_MOTOR_ONE 1310 //!< @brief 一发弹丸拨弹盘电机转过的机械角度
 
 #elif ROBOT_ID == 4
 #define Yaw_Mid_Front 7880   //!< @brief Yaw轴电机机器人前方中值
@@ -104,7 +104,8 @@ enum
     Init = 0,
     Mech = 1,
     Gyro = 2,
-    GIMBAL_MODE = 3,
+    AIM = 3,
+    GIMBAL_MODE = 4,
 };
 
 enum
@@ -233,6 +234,7 @@ extern M2006_TypeDef  Pluck_Motor;
 extern PID Gimbal_Speed_PID[GIMBAL_SUM][GIMBAL_MODE], Shoot_Speed_PID[FRIC_SUM], Pluck_Speed_PID, Pluck_Continue_PID, Chassis_Speed_PID;
 extern PID_Smis Gimbal_Place_PIDS[GIMBAL_SUM][GIMBAL_MODE], Pluck_Place_PIDS, Chassis_Speed_PIDS;
 extern FeedForward_Typedef Chassis_FF;
+;
 /* 云台期望 */
 extern PTZAngle_Ref_t Gyro_Ref, Mech_Ref, Aim_Ref, Gimbal_Ramp_Angle;
 extern float Gimbal_increase[GIMBAL_SUM][RC_Mode];

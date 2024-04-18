@@ -15,12 +15,8 @@ void Task_Shoot(void *pvParameters)
 			ShootAction = SHOOT_STOP;
         } else {
             if((Shoot_State[LEFT] == Device_Online) && (Shoot_State[RIGHT] == Device_Online) && (Pluck_State == Device_Online)){
-                if(RemoteMode == REMOTE_INPUT)
-                    Shoot_Rc_Ctrl();
-                else if(RemoteMode == KEY_MOUSE_INPUT)
-                    Shoot_Key_Ctrl();
-                else
-                    Shoot_Stop();
+                RemoteMode == REMOTE_INPUT ? Shoot_Rc_Ctrl() :
+                RemoteMode == KEY_MOUSE_INPUT ? Shoot_Key_Ctrl() : Shoot_Stop();
                 if(RemoteMode != STOP)
                     Shoot_Drive();
 #if SHOOT_RUN
@@ -66,7 +62,7 @@ void Shoot_Key_Ctrl()
         if(RC_CtrlData.mouse.press_l == 1){
             if(ShootAction != SHOOT_STUCKING)
             ShootAction = SHOOT_NORMAL;    
-        } else{
+        } else {
             if(ShootAction != SHOOT_STUCKING)
             ShootAction = SHOOT_READY;
         }
@@ -77,7 +73,7 @@ void Shoot_Key_Ctrl()
             ShootAction = SHOOT_RUNNING;
             normal_time = 200;
         }
-    } else{
+    } else {
         normal_time = 0;
     }
 }
@@ -92,14 +88,14 @@ void Shoot_Drive()
     static float Stuck_Angle_Target = 0;              //!< @brief拨弹盘卡弹退弹期望角度
     static eShootAction Last_status = SHOOT_STOP;     //!< @brief记录卡弹前的状态
     static uint16_t  Stuck_time = 0;                  //!< @brief检测卡弹的时间
-    static const uint16_t Stuck_thre = 100;           //!< @brief卡弹阈值，卡弹超过此时间便认为卡弹
+    static const uint16_t Stuck_thre = 200;           //!< @brief卡弹阈值，卡弹超过此时间便认为卡弹
 
-    if(ShootAction == SHOOT_STOP){
+    if(ShootAction == SHOOT_STOP){  //急停模式
         Shoot_Stop();   //发射机构急停
         Stuck_time = 0; //卡弹时间清零
         Angle_Target = Pluck_Motor.Angle_DEG;   //记录角度
         RAMP_Angle_Target = Pluck_Motor.Angle_DEG;
-    } else{
+    } else { 
         /* 准备发射（摩擦轮启动）(17mm弹丸速度限制固定30m/s) */
         PID_Control(Shoot_Motor [LEFT].Speed, -SHOOT_SPEED, &Shoot_Speed_PID [LEFT]);
         PID_Control(Shoot_Motor [RIGHT].Speed, SHOOT_SPEED, &Shoot_Speed_PID [RIGHT]);
@@ -115,7 +111,7 @@ void Shoot_Drive()
        if(ShootAction == SHOOT_READY)
            Add_Angle_Flag = 1;
         if(ShootAction == SHOOT_NORMAL || ShootAction == SHOOT_READY){  //单发
-           RAMP_Angle_Target = RAMP_float (Angle_Target, RAMP_Angle_Target, 25);
+           RAMP_Angle_Target = RAMP_float (Angle_Target, RAMP_Angle_Target, 15);
            PID_Control_Smis(Pluck_Motor.Angle_DEG, RAMP_Angle_Target, &Pluck_Place_PIDS ,Pluck_Motor.Speed);
            PID_Control(Pluck_Motor.Speed, Pluck_Place_PIDS.pid_out, &Pluck_Speed_PID);
            limit(Pluck_Speed_PID.pid_out, M2006_LIMIT, -M2006_LIMIT); 
@@ -128,7 +124,7 @@ void Shoot_Drive()
             RAMP_Angle_Target = Pluck_Motor.Angle_DEG;
         } else if(ShootAction == SHOOT_STUCKING){       //卡弹退单
             if (Stuck_time == Stuck_thre )
-                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE / 2;
+                Stuck_Angle_Target = Pluck_Motor.Angle_DEG - PLUCK_MOTOR_ONE * 2 ;
            Stuck_time++;
            PID_Control_Smis(Pluck_Motor.Angle_DEG, Stuck_Angle_Target, &Pluck_Place_PIDS, Pluck_Motor.Speed);
            PID_Control(Pluck_Motor.Speed, Pluck_Place_PIDS.pid_out, &Pluck_Speed_PID);
@@ -142,12 +138,12 @@ void Shoot_Drive()
         if(ShootAction != SHOOT_STUCKING){         //卡弹检测
             if(ShootAction != SHOOT_RUNNING){     //单发不到期望位置的5/4且速度很小时算卡弹
                 if ( ( ABS ( Angle_Target - Pluck_Motor.Angle_DEG ) >=  ABS(PLUCK_MOTOR_ONE / 5)  ) &&
-                       ABS( Pluck_Motor.Speed ) <= 30 )
+                       ABS( Pluck_Motor.Speed ) <= 5 )
                     Stuck_time++;
                 else
                     Stuck_time = 0;
-            } else{       //连发速度很小时算卡弹
-                if (ABS( Pluck_Motor.Speed ) <= 30 )
+            } else {       //连发速度很小时算卡弹
+                if (ABS( Pluck_Motor.Speed ) <= 5 )
                     Stuck_time++;
                 else
                     Stuck_time = 0;
